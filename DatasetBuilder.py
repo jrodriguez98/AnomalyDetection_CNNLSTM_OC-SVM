@@ -25,7 +25,7 @@ def save_figures_from_video(dataset_video_path, video_filename, suffix,figures_p
 
     video_file = os.path.join(dataset_video_path, video_filename + suffix)
     label = 0
-    print('Extracting frames from video: ', video_file)
+    # print('Extracting frames from video: ', video_file)
 
     videoCapture = cv2.VideoCapture(video_file)
     if fix_len is not None:
