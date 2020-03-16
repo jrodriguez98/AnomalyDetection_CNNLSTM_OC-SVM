@@ -12,6 +12,7 @@ import DatasetBuilder
 
 from numpy.random import seed, shuffle
 
+import tensorflow as tf
 from collections import defaultdict
 
 
@@ -34,7 +35,9 @@ def train_eval_network(dataset_name, train_gen, validate_gen, test_x, test_y, se
                        optimizer, cnn_train_type, pre_weights, lstm_conf, len_train, len_valid, dropout, classes,
                        patience_es=15, patience_lr=5, save=False):
     """the function build, compine fit and evaluate a certain architechtures on a dataset"""
-    set_random_seed(2)
+    tf.random.set_seed(2)
+    
+
     seed(1)
     result = dict(dataset=dataset_name, cnn_train=cnn_train_type,
                   cnn=cnn_arch.__name__, lstm=lstm_conf[0].__name__, epochs=epochs,
