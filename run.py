@@ -1,18 +1,20 @@
 import os
 from itertools import chain
+import tensorflow as tf
 
-from keras.callbacks import EarlyStopping, ReduceLROnPlateau, Callback
-from keras.optimizers import RMSprop, Adam
+from tensorflow import keras
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, Callback
+from tensorflow.keras.optimizers import RMSprop, Adam
 
 import pandas as pd
-from keras.applications import Xception, ResNet50, InceptionV3, MobileNet, VGG19, DenseNet121, InceptionResNetV2, VGG16
-from keras.layers import LSTM, ConvLSTM2D
+from tensorflow.keras.applications import Xception, ResNet50, InceptionV3, MobileNet, VGG19, DenseNet121, InceptionResNetV2, VGG16
+from tensorflow.keras.layers import LSTM, ConvLSTM2D
 import BuildModel_basic
 import DatasetBuilder
 
 from numpy.random import seed, shuffle
 
-import tensorflow as tf
+
 from collections import defaultdict
 
 

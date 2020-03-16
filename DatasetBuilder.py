@@ -4,12 +4,12 @@ import cv2
 import pickle
 import glob
 import numpy as np
-from keras.preprocessing.image import load_img, img_to_array
-from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 from collections import defaultdict
-from keras.preprocessing import image
+from tensorflow.keras.preprocessing import image
 import random
 
 corner_keys = ["Center","Left_up","Left_down","Right_up","Right_down"]
