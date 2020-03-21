@@ -215,7 +215,7 @@ use_augs = [True, False, ]
 fix_lens = [20, 10]
 optimizers = [(RMSprop, {}), (Adam, {})]
 dropouts = [0.0, 0.5]
-cnn_train_types = ['retrain', 'static']
+cnn_train_types = ['static']
 
 apply_hyper = True
 
@@ -239,7 +239,7 @@ if apply_hyper:
 else:
     results = []
     cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = ResNet50, 0.0001, (
-    RMSprop, {}), 'retrain', 0.0, True, 20
+    RMSprop, {}), 'static', 0.0, True, 20
 
 # apply best architechture on all datasets with more epochs
 for dataset_name, dataset_videos in datasets_videos.items():
