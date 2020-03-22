@@ -99,7 +99,7 @@ def train_eval_network(dataset_name, train_gen, validate_gen, test_x, test_y, se
             os.mkdir(models_dir)
 
         model_path = os.path.join(models_dir, dataset_name) + '.h5'
-        model.save(model_path)
+        model.save(model_path, save_format='h5')
 
     return result
 
@@ -226,10 +226,10 @@ classes = 1
 cnns_arch = dict(ResNet50=ResNet50, InceptionV3=InceptionV3, VGG19=VGG19)  #
 learning_rates = [1e-4, 1e-3]
 use_augs = [True, False, ]
-fix_lens = [20, 10]
+fix_lens = [10]
 optimizers = [(RMSprop, {}), (Adam, {})]
 dropouts = [0.0, 0.5]
-cnn_train_types = ['static']
+cnn_train_types = ['retrain','static']
 
 apply_hyper = True
 
