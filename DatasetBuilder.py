@@ -25,7 +25,7 @@ def save_figures_from_video(dataset_video_path, video_filename, suffix,figures_p
 
     video_file = os.path.join(dataset_video_path, video_filename + suffix)
     label = 0
-    print('Extracting frames from video: ', video_file)
+    #print('Extracting frames from video: ', video_file)
 
     videoCapture = cv2.VideoCapture(video_file)
     if fix_len is not None:
@@ -64,6 +64,7 @@ def createDataset(datasets_video_path, figure_output_path,fix_len, force = False
         for filename in os.listdir(dataset_video_path):
             if filename.endswith(".avi") or filename.endswith(".mpg"):
                 video_images_file = os.path.join(dataset_figures_path,filename[:-4], 'video_summary.pkl')
+                
                 if os.path.isfile(video_images_file) and not force:
                     with open(video_images_file, 'rb') as f:
                         video_images = pickle.load(f)
@@ -88,7 +89,6 @@ def createDataset(datasets_video_path, figure_output_path,fix_len, force = False
     avg_length = int(float(sum(videos_seq_length)) / max(len(videos_seq_length), 1))
 
     train_path, test_path, train_y, test_y =  train_test_split(videos_frames_paths,videos_labels, test_size=0.20, random_state=42)
-
     # if apply_aug:
     #     aug_paths = []
     #     aug_y = []
