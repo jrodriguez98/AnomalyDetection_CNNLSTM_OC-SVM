@@ -12,6 +12,7 @@ import DatasetBuilder
 
 from numpy.random import seed, shuffle
 
+from tensorflow import set_random_seed
 from collections import defaultdict
 
 
@@ -118,7 +119,7 @@ def get_generators(dataset_name, dataset_videos, datasets_frames, fix_len, figur
                                                  use_aug=False, use_crop=False, crop_x_y=crop_x_y, classes=classes)
     test_x, test_y = DatasetBuilder.get_sequences(test_path, test_y, figure_size, avg_length, crop_x_y=crop_x_y,
                                                   classes=classes)
-
+    
     return train_gen, validate_gen, test_x, test_y, avg_length, len_train, len_valid
 
 
@@ -195,6 +196,12 @@ datasets_videos = dict(
     hocky=dict(hocky="data/raw_videos/HockeyFights"),
     violentflow=dict(violentflow="data/raw_videos/violentflow"),
     movies=dict(movies="data/raw_videos/movies")
+)
+
+datasets_frames = dict(
+    hocky=dict(hocky="data/raw_frames/hocky"),
+    violentflow=dict(violentflow="data/raw_frames/violentflow"),
+    movies=dict(movies="data/raw_frames/movies")
 )
 
 crop_dark = dict(
