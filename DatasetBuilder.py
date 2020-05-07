@@ -107,6 +107,31 @@ def createDataset(datasets_video_path, figure_output_path,fix_len, force = False
            avg_length
 
 
+def get_positive_class_path(datasets_frame_path: dict):
+    """Return a train/test split of the paths
+
+    Parameters:
+    datasets_frame_path (dict): key: name of the dataset, value: root directory of frames
+
+    Returns:
+    train_path (list): List with the paths for training the OC-SVM
+    test_path (list): List with the paths for testing the OC-SVM
+
+    """
+    video_frames_path_no = []
+    
+    for dataset_name, dataset_frame_path in datasets_frame_path.items():
+        for entry in os.scandir(dataset_frame_path):
+            if entry.is_dir() and entry.name.startswith('no'): # Append no fights frames
+                complete_path = os.path.join(dataset_frame_path, entry.name)
+                video_frames_path_no.append(complete_path)
+
+    
+    train_path, test_path =  train_test_split(video_frames_path_no, test_size=0.20, random_state=42)
+
+    return train_path, test_path
+
+
 def frame_loader(frames,figure_shape,to_norm = True):
     output_frames = []
     for frame in frames:

@@ -204,6 +204,12 @@ datasets_frames = dict(
     movies=dict(movies="data/raw_frames/movies")
 )
 
+datasets_models = dict(
+    hocky=dict(hocky="models/hocky.h5"),
+    violentflow=dict(violentflow="data/raw_frames/violentflow.h5"),
+    movies=dict(movies="data/raw_frames/movies.h5")
+)
+
 crop_dark = dict(
     hocky=(11, 38),
     violentflow=None,
@@ -238,7 +244,7 @@ apply_hyper = True
 if apply_hyper:
     # the hyper tunning symulate the architechture behavior
     # we set the batch_epoch_ratio - reduced by X to have the hypertunning faster with epoches shorter
-    hyper, results = hyper_tune_network(dataset_name='hocky', epochs=30,
+    hyper, results = hyper_tune_network(dataset_name='movies', epochs=30,
                                         batch_size=batch_size, batch_epoch_ratio=1, figure_size=figure_size,
                                         initial_weights=initial_weights, lstm=lstm,
                                         cnns_arch=cnns_arch, learning_rates=learning_rates,
