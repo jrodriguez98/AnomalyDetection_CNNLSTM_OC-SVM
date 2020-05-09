@@ -137,9 +137,9 @@ def get_model(dataset_model_path, num_output_features=10):
     elif (num_output_features == 256):
         index = -7
     elif (num_output_features == 1000):
-        index = -10
+        index = -9
     else:
-        raise Exception('num_output_features can not be {}, possible values [10,256,1000]'.format(num_output_features))
+        raise Exception('num_output_features can not be {}, possible values [10, 256, 1000]'.format(num_output_features))
 
     model = load_model(dataset_model_path)
 
@@ -179,7 +179,7 @@ def join_datasets (train_x_hocky, train_x_violentflow, train_x_movies, test_x_ho
 
 def train_eval_svm(train_x, test_x, test_y):
     
-    clf = OneClassSVM(kernel='rbf', gamma='auto')
+    clf = OneClassSVM(kernel='poly', gamma='scale')
     y_train_pred = clf.fit_predict(train_x)
 
     num_errors = len([x for x in y_train_pred if x != 1])
@@ -253,3 +253,4 @@ create_dirs()
 
 compute_all(10)
 compute_all(256)
+compute_all(1000)
