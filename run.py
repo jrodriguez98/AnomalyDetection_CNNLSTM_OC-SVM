@@ -226,7 +226,7 @@ classes = 1
 cnns_arch = dict(ResNet50=ResNet50, InceptionV3=InceptionV3, VGG19=VGG19)  #
 learning_rates = [1e-4, 1e-3]
 use_augs = [True, False, ]
-fix_lens = [10]
+fix_lens = [10, 20]
 optimizers = [(RMSprop, {}), (Adam, {})]
 dropouts = [0.0, 0.5]
 cnn_train_types = ['retrain','static']

@@ -1,5 +1,9 @@
 __pycache__/
 data/
-models/
+models*/
 BuildModel_basic.pyc
 DatasetBuilder.pyc
+.vscode/
+venv/
+svm_features/
+results/
