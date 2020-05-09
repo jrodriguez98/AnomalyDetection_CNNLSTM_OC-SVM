@@ -1,5 +1,8 @@
-./data/
-./models/
+data/
+models/
+svm_features/
+results/
+models*/
 
 # Editors
 .vscode/
