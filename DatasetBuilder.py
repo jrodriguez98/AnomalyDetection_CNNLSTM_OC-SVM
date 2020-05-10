@@ -16,6 +16,9 @@ corner_keys = ["Center","Left_up","Left_down","Right_up","Right_down"]
 
 Debug_Print_AUG=False
 
+
+
+
 def save_figures_from_video(dataset_video_path, video_filename, suffix,figures_path,skip_frames = 25,apply_norm = True, apply_diff = True,fix_len = None):
     seq_len = 0
 
