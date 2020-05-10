@@ -5,10 +5,11 @@ from sklearn.model_selection import train_test_split
 import glob
 from DatasetBuilder import frame_loader, pad_sequences, get_sequences, createDataset
 from random import shuffle
-
+from keras.utils import Sequence
 from keras.models import load_model, Model
 import numpy as np
 import pandas as pd
+import math
 
 def get_positive_class_path(dataset_name, dataset_frame_path):
     """Return a train/test split of the paths
@@ -88,6 +89,27 @@ def get_sequences_x(data_paths, figure_shape, seq_length,classes=1, use_augmenta
     return np.array(X)
 
 
+class Dataset_Sequence(Sequence):
+
+    def __init__(self, x_set, batch_size, figure_shape, seq_length, crop_x_y, classes):
+        self.x = x_set
+        self.batch_size = batch_size
+        self.figure_shape = figure_shape
+        self.seq_length = seq_length
+        self.crop_x_y = crop_x_y
+        self.classes = classes
+
+    def __len__(self):
+        return math.ceil(len(self.x) / self.batch_size)
+
+    def __getitem__(self, idx):
+        batch_x = self.x[idx * self.batch_size : (idx + 1) * self.batch_size]
+
+        X = get_sequences_x(batch_x, self.figure_shape, self.seq_length, crop_x_y=self.crop_x_y, classes=self.classes)
+
+        return X
+
+
 def data_generator_svm(data_paths,batch_size,figure_shape,seq_length,use_aug,use_crop,crop_x_y,classes=1, random=True):
     while True:
         indexes = np.arange(len(data_paths))
@@ -96,9 +118,23 @@ def data_generator_svm(data_paths,batch_size,figure_shape,seq_length,use_aug,use
 
         select_indexes = indexes[:batch_size]
         data_paths_batch = [data_paths[i] for i in select_indexes]
-
+        
         X = get_sequences_x(data_paths_batch, figure_shape, seq_length, crop_x_y=crop_x_y, classes=classes)
 
+        yield X
+
+def test_generator_svm(data_paths, batch_size, figure_shape, seq_length, use_aug, use_crop, crop_x_y, classes=1):
+    init = 0
+    while True:
+        indexes = np.arange(len(data_paths))
+        end = init + batch_size
+        select_indexes = indexes[init:end]
+        data_paths_batch = [data_paths[i] for i in select_indexes]
+        print(data_paths_batch)
+        X = get_sequences_x(data_paths_batch, figure_shape, seq_length, crop_x_y=crop_x_y, classes=classes)
+
+        init = end
+        print('END: {}'.format(end))
         yield X
 
 def get_generators_svm(dataset_name, dataset_frames_path, fix_len, figure_size, force, classes=1, use_aug=False,
@@ -113,17 +149,12 @@ def get_generators_svm(dataset_name, dataset_frames_path, fix_len, figure_size, 
         crop_x_y = crop_dark[dataset_name]
 
     len_train, len_test = len(train_path), len(test_path)
-    
-    train_x = data_generator_svm(train_path, batch_size, figure_size, avg_length, use_aug, use_crop, crop_x_y, classes=1)
+                            
+    train_x = Dataset_Sequence(train_path, batch_size, figure_size, avg_length, crop_x_y, classes=1)
 
-    test_x = data_generator_svm(test_path, batch_size, figure_size, avg_length, use_aug, use_crop, crop_x_y, classes=1, random=False)
+    test_x = Dataset_Sequence(test_path, batch_size, figure_size, avg_length, crop_x_y, classes=1)
 
-    test_y = np.asarray(test_y)
-
-    print('TRAIN LEN {}'.format(dataset_name))
-    print(len_train)  
-    print('TEST SHAPE {}'.format(dataset_name))
-    print(len_test)     
+    test_y = np.asarray(test_y) 
 
     assert len_test == len(test_y)                                       
 
@@ -138,6 +169,8 @@ def get_model(dataset_model_path, num_output_features=10):
         index = -7
     elif (num_output_features == 1000):
         index = -9
+    elif (num_output_features == 2000):
+        index = -12
     else:
         raise Exception('num_output_features can not be {}, possible values [10, 256, 1000]'.format(num_output_features))
 
@@ -160,8 +193,9 @@ def compute_representation(dataset_name, datasets_paths, num_output_features):
 
     model = get_model(datasets_paths[dataset_name]['model'], num_output_features=num_output_features)
 
-    train_x = model.predict_generator(train_x, steps=int(len_train/batch_size))
-    test_x = model.predict_generator(test_x, steps=int(len_test/batch_size))
+    train_x = model.predict_generator(train_x)
+    
+    test_x = model.predict_generator(test_x)
     # Save representations in csv
     #np.savetxt(datasets_paths[dataset_name]['svm_features'], svm_inputs, delimiter=',')
 
@@ -179,15 +213,17 @@ def join_datasets (train_x_hocky, train_x_violentflow, train_x_movies, test_x_ho
 
 def train_eval_svm(train_x, test_x, test_y):
     
-    clf = OneClassSVM(kernel='poly', gamma='scale')
+    clf = OneClassSVM(kernel='rbf', gamma='auto')
     y_train_pred = clf.fit_predict(train_x)
 
     num_errors = len([x for x in y_train_pred if x != 1])
     acc_train = num_errors/len(y_train_pred)
 
     y_pred = clf.predict(test_x) # Predictions
+    print('LEN Y_PRED: {}'.format(len(y_pred)))
+    print(y_pred)    
     acc_test = accuracy_score(test_y, y_pred) # Compute accuracy
-    print(y_pred)
+    
     result = {}
     result['accuracy'] = acc_test
 
@@ -225,7 +261,7 @@ def compute_all(num_output_features):
     result ['dataset'] = 'join'
     results.append(result)
 
-    pd.DataFrame(results).to_csv("results/results_svm_{}.csv".format(num_output_features))
+    pd.DataFrame(results).to_csv("results_svm/results_svm_{}.csv".format(num_output_features))
 
     #np.savetxt("svm_features/join_train_x_{}.csv".format(num_output_features), join_train_x, delimiter=',')
 
@@ -239,6 +275,9 @@ def create_dirs():
 
     if not os.path.exists('svm_features'):
         os.makedirs('svm_features')
+
+    if not os.path.exists('results_svm'):
+        os.makedirs('results_svm')
 
     
 # Prueba
@@ -254,3 +293,4 @@ create_dirs()
 compute_all(10)
 compute_all(256)
 compute_all(1000)
+compute_all(2000)
