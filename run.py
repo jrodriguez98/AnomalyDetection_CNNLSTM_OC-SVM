@@ -239,7 +239,7 @@ optimizers = [(RMSprop, {}), (Adam, {})]
 dropouts = [0.0, 0.5]
 cnn_train_types = ['retrain', 'static']
 
-apply_hyper = True
+apply_hyper = False
 
 if apply_hyper:
     # the hyper tunning symulate the architechture behavior
