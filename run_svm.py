@@ -1,6 +1,6 @@
 import os
 from sklearn.svm import OneClassSVM
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 import glob
 from DatasetBuilder import frame_loader, pad_sequences, get_sequences, createDataset
@@ -213,7 +213,7 @@ def join_datasets (train_x_hocky, train_x_violentflow, train_x_movies, test_x_ho
 
 def train_eval_svm(train_x, test_x, test_y):
     
-    clf = OneClassSVM(kernel='rbf', gamma='auto')
+    clf = OneClassSVM(kernel='rbf', gamma='scale')
     y_train_pred = clf.fit_predict(train_x)
 
     num_errors = len([x for x in y_train_pred if x != 1])
@@ -222,17 +222,23 @@ def train_eval_svm(train_x, test_x, test_y):
     y_pred = clf.predict(test_x) # Predictions
     print('LEN Y_PRED: {}'.format(len(y_pred)))
     print(y_pred)    
-    acc_test = accuracy_score(test_y, y_pred) # Compute accuracy
     
-    result = {}
-    result['accuracy'] = acc_test
+    print('MATRIZ DE CONFUSIÓN')
+    print(confusion_matrix(test_y, y_pred))
+    print('---------------------------------------------------')
+    #acc_test = accuracy_score(test_y, y_pred) # Compute accuracy
+    print("Precision= TP / (TP + FP), Recall= TP / (TP + FN)")
+    print("f1-score es la media entre precisión y recall")
+    
+    result = classification_report(test_y, y_pred, output_dict=True)
+    print(result)
+    #result['accuracy'] = acc_test
 
     return result
 
 
 
 def compute_all(num_output_features):
-    results = []
 
     datasets_paths = dict(
         hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5", svm_features="svm_features/hocky_{}.csv".format(num_output_features)),
@@ -242,26 +248,21 @@ def compute_all(num_output_features):
     # Compute the inner represention on the 3 datasets independently
     train_x_hocky, test_x_hocky, test_y_hocky = compute_representation('hocky', datasets_paths, num_output_features)
     result = train_eval_svm(train_x_hocky, test_x_hocky, test_y_hocky)
-    result ['dataset'] = 'hocky'
-    results.append(result)
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_hocky_{}.csv".format(num_output_features))
+    
 
     train_x_violentflow, test_x_violentflow, test_y_violent_flow = compute_representation('violentflow', datasets_paths, num_output_features)
     result = train_eval_svm(train_x_violentflow, test_x_violentflow, test_y_violent_flow)
-    result ['dataset'] = 'violentflow'
-    results.append(result)
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_violentflow_{}.csv".format(num_output_features))
 
     train_x_movies, test_x_movies, test_y_movies  = compute_representation('movies', datasets_paths, num_output_features)
     result = train_eval_svm(train_x_movies, test_x_movies, test_y_movies)
-    result ['dataset'] = 'movies'
-    results.append(result)
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_movies_{}.csv".format(num_output_features))
 
     join_train_x, join_test_x, join_test_y = join_datasets(train_x_hocky, train_x_violentflow, train_x_movies, test_x_hocky, test_x_violentflow, test_x_movies, test_y_hocky, test_y_violent_flow, test_y_movies)
 
     result = train_eval_svm(join_train_x, join_test_x, join_test_y)
-    result ['dataset'] = 'join'
-    results.append(result)
-
-    pd.DataFrame(results).to_csv("results_svm/results_svm_{}.csv".format(num_output_features))
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_join_{}.csv".format(num_output_features))
 
     #np.savetxt("svm_features/join_train_x_{}.csv".format(num_output_features), join_train_x, delimiter=',')
 
