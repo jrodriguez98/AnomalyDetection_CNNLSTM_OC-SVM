@@ -109,34 +109,6 @@ class Dataset_Sequence(Sequence):
 
         return X
 
-
-def data_generator_svm(data_paths,batch_size,figure_shape,seq_length,use_aug,use_crop,crop_x_y,classes=1, random=True):
-    while True:
-        indexes = np.arange(len(data_paths))
-        if random:
-            np.random.shuffle(indexes)
-
-        select_indexes = indexes[:batch_size]
-        data_paths_batch = [data_paths[i] for i in select_indexes]
-        
-        X = get_sequences_x(data_paths_batch, figure_shape, seq_length, crop_x_y=crop_x_y, classes=classes)
-
-        yield X
-
-def test_generator_svm(data_paths, batch_size, figure_shape, seq_length, use_aug, use_crop, crop_x_y, classes=1):
-    init = 0
-    while True:
-        indexes = np.arange(len(data_paths))
-        end = init + batch_size
-        select_indexes = indexes[init:end]
-        data_paths_batch = [data_paths[i] for i in select_indexes]
-        print(data_paths_batch)
-        X = get_sequences_x(data_paths_batch, figure_shape, seq_length, crop_x_y=crop_x_y, classes=classes)
-
-        init = end
-        print('END: {}'.format(end))
-        yield X
-
 def get_generators_svm(dataset_name, dataset_frames_path, fix_len, figure_size, force, classes=1, use_aug=False,
                    use_crop=True, crop_dark=None):
 
@@ -186,19 +158,17 @@ def get_model(dataset_model_path, num_output_features=10):
     return intermediate_model
 
 
-def compute_representation(dataset_name, datasets_paths, num_output_features):
-
+def compute_representation(dataset_model, dataset_name, datasets_paths, num_output_features):
+    # Take the generators from "dataset_name" path
     train_x, test_x, test_y, avg_length, len_train, len_test = get_generators_svm(dataset_name, datasets_paths[dataset_name]['frames'], fix_len, figure_size, force, classes=1, use_aug=False,
                    use_crop=True, crop_dark=None)
-
-    model = get_model(datasets_paths[dataset_name]['model'], num_output_features=num_output_features)
+    # Get the 'dataset_model' model
+    model = get_model(datasets_paths[dataset_model]['model'], num_output_features=num_output_features)
 
     train_x = model.predict_generator(train_x)
-    
-    test_x = model.predict_generator(test_x)
-    # Save representations in csv
-    #np.savetxt(datasets_paths[dataset_name]['svm_features'], svm_inputs, delimiter=',')
 
+    test_x = model.predict_generator(test_x)
+    
     return train_x, test_x, test_y
 
 def join_datasets (train_x_hocky, train_x_violentflow, train_x_movies, test_x_hocky, test_x_violentflow, test_x_movies, test_y_hocky, test_y_violent_flow, test_y_movies):
@@ -214,57 +184,37 @@ def join_datasets (train_x_hocky, train_x_violentflow, train_x_movies, test_x_ho
 def train_eval_svm(train_x, test_x, test_y):
     
     clf = OneClassSVM(kernel='rbf', gamma='scale')
-    y_train_pred = clf.fit_predict(train_x)
-
-    num_errors = len([x for x in y_train_pred if x != 1])
-    acc_train = num_errors/len(y_train_pred)
+    clf.fit(train_x)
 
     y_pred = clf.predict(test_x) # Predictions
-    print('LEN Y_PRED: {}'.format(len(y_pred)))
-    print(y_pred)    
-    
-    print('MATRIZ DE CONFUSIÓN')
-    print(confusion_matrix(test_y, y_pred))
-    print('---------------------------------------------------')
-    #acc_test = accuracy_score(test_y, y_pred) # Compute accuracy
-    print("Precision= TP / (TP + FP), Recall= TP / (TP + FN)")
-    print("f1-score es la media entre precisión y recall")
     
     result = classification_report(test_y, y_pred, output_dict=True)
-    print(result)
-    #result['accuracy'] = acc_test
 
     return result
 
 
 
-def compute_all(num_output_features):
+def compute_all(num_output_features, dataset_model):
 
-    datasets_paths = dict(
-        hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5", svm_features="svm_features/hocky_{}.csv".format(num_output_features)),
-        violentflow=dict(frames='data/raw_frames/violentflow', model="models/violentflow.h5", svm_features="svm_features/violentflow_{}.csv".format(num_output_features)),
-        movies=dict(frames='data/raw_frames/movies', model="models/movies.h5", svm_features="svm_features/movies_{}.csv".format(num_output_features))
-    )
     # Compute the inner represention on the 3 datasets independently
-    train_x_hocky, test_x_hocky, test_y_hocky = compute_representation('hocky', datasets_paths, num_output_features)
+    train_x_hocky, test_x_hocky, test_y_hocky = compute_representation(dataset_model, 'hocky', datasets_paths, num_output_features)
     result = train_eval_svm(train_x_hocky, test_x_hocky, test_y_hocky)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_hocky_{}.csv".format(num_output_features))
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_hocky_model_{}_{}.csv".format(dataset_model, num_output_features))
     
 
-    train_x_violentflow, test_x_violentflow, test_y_violent_flow = compute_representation('violentflow', datasets_paths, num_output_features)
+    train_x_violentflow, test_x_violentflow, test_y_violent_flow = compute_representation(dataset_model, 'violentflow', datasets_paths, num_output_features)
     result = train_eval_svm(train_x_violentflow, test_x_violentflow, test_y_violent_flow)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_violentflow_{}.csv".format(num_output_features))
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_violentflow_model_{}_{}.csv".format(dataset_model, num_output_features))
 
-    train_x_movies, test_x_movies, test_y_movies  = compute_representation('movies', datasets_paths, num_output_features)
+    train_x_movies, test_x_movies, test_y_movies  = compute_representation(dataset_model, 'movies', datasets_paths, num_output_features)
     result = train_eval_svm(train_x_movies, test_x_movies, test_y_movies)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_movies_{}.csv".format(num_output_features))
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_movies_model_{}_{}.csv".format(dataset_model, num_output_features))
 
     join_train_x, join_test_x, join_test_y = join_datasets(train_x_hocky, train_x_violentflow, train_x_movies, test_x_hocky, test_x_violentflow, test_x_movies, test_y_hocky, test_y_violent_flow, test_y_movies)
 
     result = train_eval_svm(join_train_x, join_test_x, join_test_y)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_join_{}.csv".format(num_output_features))
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_join_model_{}_{}.csv".format(dataset_model, num_output_features))
 
-    #np.savetxt("svm_features/join_train_x_{}.csv".format(num_output_features), join_train_x, delimiter=',')
 
 
 def create_dirs():
@@ -287,11 +237,16 @@ figure_size = 244
 force = True
 batch_size = 2
 
-#diccionario = dict(hocky='data/raw_frames/hocky')
+num_outputs = [10, 256, 1000, 2000]
+datasets_paths = dict(
+        hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5", svm_features="svm_features/hocky_{}.csv".format(num_output_features)),
+        violentflow=dict(frames='data/raw_frames/violentflow', model="models/violentflow.h5", svm_features="svm_features/violentflow_{}.csv".format(num_output_features)),
+        movies=dict(frames='data/raw_frames/movies', model="models/movies.h5", svm_features="svm_features/movies_{}.csv".format(num_output_features))
+    )
 
 create_dirs()
 
-compute_all(10)
-compute_all(256)
-compute_all(1000)
-compute_all(2000)
+for dataset in datasets_paths.keys():
+    for num_output in num_outputs:
+        compute_all(num_output, dataset)
+        exit()
