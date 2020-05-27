@@ -196,6 +196,12 @@ def train_eval_svm(train_x, test_x, test_y):
 
 def compute_all(num_output_features, dataset_model):
 
+    datasets_paths = dict(
+        hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5", svm_features="svm_features/hocky_{}.csv".format(num_output_features)),
+        violentflow=dict(frames='data/raw_frames/violentflow', model="models/violentflow.h5", svm_features="svm_features/violentflow_{}.csv".format(num_output_features)),
+        movies=dict(frames='data/raw_frames/movies', model="models/movies.h5", svm_features="svm_features/movies_{}.csv".format(num_output_features))
+    )
+
     # Compute the inner represention on the 3 datasets independently
     train_x_hocky, test_x_hocky, test_y_hocky = compute_representation(dataset_model, 'hocky', datasets_paths, num_output_features)
     result = train_eval_svm(train_x_hocky, test_x_hocky, test_y_hocky)
@@ -224,9 +230,6 @@ def create_dirs():
     if not os.path.exists('models'):
         os.makedirs('models')
 
-    if not os.path.exists('svm_features'):
-        os.makedirs('svm_features')
-
     if not os.path.exists('results_svm'):
         os.makedirs('results_svm')
 
@@ -238,15 +241,14 @@ force = True
 batch_size = 2
 
 num_outputs = [10, 256, 1000, 2000]
-datasets_paths = dict(
-        hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5", svm_features="svm_features/hocky_{}.csv".format(num_output_features)),
-        violentflow=dict(frames='data/raw_frames/violentflow', model="models/violentflow.h5", svm_features="svm_features/violentflow_{}.csv".format(num_output_features)),
-        movies=dict(frames='data/raw_frames/movies', model="models/movies.h5", svm_features="svm_features/movies_{}.csv".format(num_output_features))
-    )
+datasets_names = ['hocky', 'violentflow', 'movies']
+
 
 create_dirs()
-
-for dataset in datasets_paths.keys():
-    for num_output in num_outputs:
-        compute_all(num_output, dataset)
+for num_output in num_outputs:
+    if (num_output == 1000):
         exit()
+    for dataset in datasets_names:
+        print(num_output, dataset)
+        compute_all(num_output, dataset)
+    
