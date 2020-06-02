@@ -246,9 +246,6 @@ datasets_names = ['hocky', 'violentflow', 'movies']
 
 create_dirs()
 for num_output in num_outputs:
-    if (num_output == 1000):
-        exit()
     for dataset in datasets_names:
-        print(num_output, dataset)
         compute_all(num_output, dataset)
     
