@@ -135,6 +135,8 @@ def get_generators_svm(dataset_name, dataset_frames_path, fix_len, figure_size, 
 
 def get_model(dataset_model_path, num_output_features=10):
 
+    cut_model = True
+
     if (num_output_features == 10):
         index = -4
     elif (num_output_features == 256):
@@ -143,29 +145,36 @@ def get_model(dataset_model_path, num_output_features=10):
         index = -9
     elif (num_output_features == 2000):
         index = -12
+    elif (num_output_features == "all"):
+        cut_model = False
     else:
         raise Exception('num_output_features can not be {}, possible values [10, 256, 1000]'.format(num_output_features))
 
     model = load_model(dataset_model_path)
 
-    input_layer = model.input
-    output_layer = model.layers[index].output
+    if (cut_model):
+        input_layer = model.input
+        output_layer = model.layers[index].output
 
-    intermediate_model = Model(inputs=model.input, output=output_layer) # New model for deep representation
+        intermediate_model = Model(inputs=model.input, output=output_layer) # New model for deep representation
 
-    # intermediate_model.summary()
+        return intermediate_model
+    
+    else:
+        return model
 
-    return intermediate_model
 
-
-def compute_representation(dataset_model, dataset_name, datasets_paths, num_output_features):
+def compute_representation(dataset_model, dataset_name, datasets_paths, num_output_features, get_train=True):
     # Take the generators from "dataset_name" path
     train_x, test_x, test_y, avg_length, len_train, len_test = get_generators_svm(dataset_name, datasets_paths[dataset_name]['frames'], fix_len, figure_size, force, classes=1, use_aug=False,
                    use_crop=True, crop_dark=None)
     # Get the 'dataset_model' model
     model = get_model(datasets_paths[dataset_model]['model'], num_output_features=num_output_features)
 
-    train_x = model.predict_generator(train_x)
+    if (get_train):
+        train_x = model.predict_generator(train_x)
+    else:
+        train_x = None
 
     test_x = model.predict_generator(test_x)
     
@@ -180,6 +189,7 @@ def join_datasets (train_x_hocky, train_x_violentflow, train_x_movies, test_x_ho
     join_test_y = np.concatenate((test_y_hocky, test_y_violent_flow, test_y_movies), axis=0)
 
     return join_train_x, join_test_x, join_test_y
+    
 
 def train_eval_svm(train_x, test_x, test_y):
     

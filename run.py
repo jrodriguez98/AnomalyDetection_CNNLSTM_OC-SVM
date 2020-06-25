@@ -239,49 +239,76 @@ optimizers = [(RMSprop, {}), (Adam, {})]
 dropouts = [0.0, 0.5]
 cnn_train_types = ['retrain', 'static']
 
+execute_original = False
 apply_hyper = False
 
-if apply_hyper:
-    # the hyper tunning symulate the architechture behavior
-    # we set the batch_epoch_ratio - reduced by X to have the hypertunning faster with epoches shorter
-    hyper, results = hyper_tune_network(dataset_name='hocky', epochs=30,
-                                        batch_size=batch_size, batch_epoch_ratio=1, figure_size=figure_size,
-                                        initial_weights=initial_weights, lstm=lstm,
-                                        cnns_arch=cnns_arch, learning_rates=learning_rates,
-                                        optimizers=optimizers, cnn_train_types=cnn_train_types, dropouts=dropouts,
-                                        classes=classes, use_augs=use_augs, fix_lens=fix_lens)
+if execute_original:
+    if apply_hyper:
+        # the hyper tunning symulate the architechture behavior
+        # we set the batch_epoch_ratio - reduced by X to have the hypertunning faster with epoches shorter
+        hyper, results = hyper_tune_network(dataset_name='hocky', epochs=30,
+                                            batch_size=batch_size, batch_epoch_ratio=1, figure_size=figure_size,
+                                            initial_weights=initial_weights, lstm=lstm,
+                                            cnns_arch=cnns_arch, learning_rates=learning_rates,
+                                            optimizers=optimizers, cnn_train_types=cnn_train_types, dropouts=dropouts,
+                                            classes=classes, use_augs=use_augs, fix_lens=fix_lens)
 
-    pd.DataFrame(results).to_csv("results_hyper.csv")
-    cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = hyper['cnn_arch'], \
-                                                                                    hyper['learning_rate'], \
-                                                                                    hyper['optimizer'], \
-                                                                                    hyper['cnn_train_type'], \
-                                                                                    hyper['dropout'], hyper['use_aug'], \
-                                                                                    hyper['seq_len'],
+        pd.DataFrame(results).to_csv("results_hyper.csv")
+        cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = hyper['cnn_arch'], \
+                                                                                        hyper['learning_rate'], \
+                                                                                        hyper['optimizer'], \
+                                                                                        hyper['cnn_train_type'], \
+                                                                                        hyper['dropout'], hyper['use_aug'], \
+                                                                                        hyper['seq_len'],
+    else:
+        results = []
+        cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = ResNet50, 0.0001, (
+        RMSprop, {}), 'retrain', 0.0, True, 20
+
+    # apply best architechture on all datasets with more epochs
+    for dataset_name, dataset_videos in datasets_videos.items():
+        train_gen, validate_gen, test_x, test_y, seq_len, len_train, len_valid = get_generators(dataset_name,
+                                                                                                dataset_videos,
+                                                                                                datasets_frames, fix_len,
+                                                                                                figure_size,
+                                                                                                force=force,
+                                                                                                classes=classes,
+                                                                                                use_aug=use_aug,
+                                                                                                use_crop=True,
+                                                                                                crop_dark=crop_dark)
+        result = train_eval_network(epochs=50, dataset_name=dataset_name, train_gen=train_gen, validate_gen=validate_gen,
+                                    test_x=test_x, test_y=test_y, seq_len=seq_len, batch_size=batch_size,
+                                    batch_epoch_ratio=0.5, initial_weights=initial_weights, size=figure_size,
+                                    cnn_arch=cnn_arch, learning_rate=learning_rate,
+                                    optimizer=optimizer, cnn_train_type=cnn_train_type,
+                                    pre_weights=weights, lstm_conf=lstm, len_train=len_train, len_valid=len_valid,
+                                    dropout=dropout, classes=classes, save=True)
+        results.append(result)
+        pd.DataFrame(results).to_csv("results_datasets.csv")
+        print(result)
+
+    pd.DataFrame(results).to_csv("results.csv")
+
 else:
-    results = []
-    cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = ResNet50, 0.0001, (
-    RMSprop, {}), 'retrain', 0.0, True, 20
+    from run_svm import compute_representation
 
-# apply best architechture on all datasets with more epochs
-for dataset_name, dataset_videos in datasets_videos.items():
-    train_gen, validate_gen, test_x, test_y, seq_len, len_train, len_valid = get_generators(dataset_name,
-                                                                                            dataset_videos,
-                                                                                            datasets_frames, fix_len,
-                                                                                            figure_size,
-                                                                                            force=force,
-                                                                                            classes=classes,
-                                                                                            use_aug=use_aug,
-                                                                                            use_crop=True,
-                                                                                            crop_dark=crop_dark)
-    result = train_eval_network(epochs=50, dataset_name=dataset_name, train_gen=train_gen, validate_gen=validate_gen,
-                                test_x=test_x, test_y=test_y, seq_len=seq_len, batch_size=batch_size,
-                                batch_epoch_ratio=0.5, initial_weights=initial_weights, size=figure_size,
-                                cnn_arch=cnn_arch, learning_rate=learning_rate,
-                                optimizer=optimizer, cnn_train_type=cnn_train_type,
-                                pre_weights=weights, lstm_conf=lstm, len_train=len_train, len_valid=len_valid,
-                                dropout=dropout, classes=classes, save=True)
-    results.append(result)
-    pd.DataFrame(results).to_csv("results_datasets.csv")
-    print(result)
-pd.DataFrame(results).to_csv("results.csv")
+    def eval_model(pred_y, test_y):
+        
+        result = classification_report(test_y, y_pred, output_dict=True)
+        print(result)
+        
+        return result
+
+
+    datasets_paths = dict(
+        hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5"),
+        violentflow=dict(frames='data/raw_frames/violentflow', model="models/violentflow.h5"),
+        movies=dict(frames='data/raw_frames/movies', model="models/movies.h5")
+    )
+
+    _, pred_y, test_y = compute_representation('hocky', 'violentflow', datasets_paths, "all", False)
+
+    print(pred_y)
+    print(test_y)
+
+
