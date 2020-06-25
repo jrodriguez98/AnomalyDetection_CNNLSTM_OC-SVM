@@ -2,6 +2,7 @@ data/
 models/
 svm_features/
 results/
+results*
 models*/
 
 # Editors
