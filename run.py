@@ -10,6 +10,8 @@ from keras.layers import LSTM, ConvLSTM2D
 import BuildModel_basic
 import DatasetBuilder
 
+import numpy as np
+
 from numpy.random import seed, shuffle
 
 from tensorflow import set_random_seed
@@ -291,10 +293,15 @@ if execute_original:
 
 else:
     from run_svm import compute_representation
+    from sklearn.metrics import accuracy_score, classification_report
 
     def eval_model(pred_y, test_y):
+
+        print(test_y)
+
+        test_y = [0 if test_y[i] == 1 else 1 for i in range(len(test_y))]
         
-        result = classification_report(test_y, y_pred, output_dict=True)
+        result = classification_report(test_y, pred_y.round())
         print(result)
         
         return result
@@ -306,9 +313,7 @@ else:
         movies=dict(frames='data/raw_frames/movies', model="models/movies.h5")
     )
 
-    _, pred_y, test_y = compute_representation('hocky', 'violentflow', datasets_paths, "all", False)
+    _, pred_y, test_y = compute_representation('hocky', 'hocky', datasets_paths, "all", False)
 
-    print(pred_y)
-    print(test_y)
-
+    eval_model(pred_y, test_y)
 
