@@ -188,7 +188,7 @@ def join_datasets (train_x_hocky, train_x_violentflow, train_x_movies, test_x_ho
 
     join_test_y = np.concatenate((test_y_hocky, test_y_violent_flow, test_y_movies), axis=0)
 
-    return join_train_x, join_test_x, join_test_y
+    return join_train_x, join_test_x, join_test_yfix_len
     
 
 def train_eval_svm(train_x, test_x, test_y):
@@ -243,19 +243,21 @@ def create_dirs():
     if not os.path.exists('results_svm'):
         os.makedirs('results_svm')
 
-    
-# Prueba
+
+
 fix_len = 20
 figure_size = 244
 force = True
 batch_size = 2
 
-num_outputs = [10, 256, 1000, 2000]
-datasets_names = ['hocky', 'violentflow', 'movies']
+if __name__ == "__main__":
+    
+    num_outputs = [10, 256, 1000, 2000]
+    datasets_names = ['hocky', 'violentflow', 'movies']
 
+    create_dirs()
 
-create_dirs()
-for num_output in num_outputs:
-    for dataset in datasets_names:
-        compute_all(num_output, dataset)
+    for num_output in num_outputs:
+        for dataset in datasets_names:
+            compute_all(num_output, dataset)
     
