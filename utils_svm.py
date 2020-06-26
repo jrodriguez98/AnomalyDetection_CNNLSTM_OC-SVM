@@ -180,16 +180,17 @@ def compute_representation_model_dataset(dataset_model, dataset_name, num_output
     
     return train_x, test_x, test_y
 
-def join_datasets (train_x_hocky, train_x_violentflow, train_x_movies, test_x_hocky, test_x_violentflow, test_x_movies, test_y_hocky, test_y_violent_flow, test_y_movies):
+
+def join_datasets (join_args):
     
-    join_train_x = np.concatenate((train_x_hocky, train_x_violentflow, train_x_movies), axis=0)
+    join_train_x = np.concatenate((join_args[0], join_args[3], join_args[6]), axis=0)
 
-    join_test_x = np.concatenate((test_x_hocky, test_x_violentflow, test_x_movies), axis=0)
+    join_test_x = np.concatenate((join_args[1], join_args[4], join_args[7]), axis=0)
 
-    join_test_y = np.concatenate((test_y_hocky, test_y_violent_flow, test_y_movies), axis=0)
+    join_test_y = np.concatenate((join_args[2], join_args[5], join_args[8]), axis=0)
 
     return join_train_x, join_test_x, join_test_y
-    
+
 
 def train_eval_svm(train_x, test_x, test_y):
     
@@ -203,54 +204,45 @@ def train_eval_svm(train_x, test_x, test_y):
     return result
 
 
+def compute_2(num_output_features, dataset_model):
 
-def compute_all_cross(num_output_features, dataset_model):
-
-    # Compute the inner represention on the 3 datasets independently
-    train_x_hocky, test_x_hocky, test_y_hocky = compute_representation_model_dataset(dataset_model, 'hocky', DATASETS_PATHS, num_output_features)
-    if(dataset_model != 'hocky'):
-        result = train_eval_svm(train_x_hocky, test_x_hocky, test_y_hocky)
-        pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/dataset_hocky_model_{}_{}.csv".format(dataset_model, num_output_features))
+    experiment = 'experiment_2'
     
+    join_args = []
+    for dataset_name in datasets_paths.keys():
+        train_x, test_x, test_y = compute_representation_model_dataset(dataset_model, dataset_name, num_output_features)
+        result = train_eval_svm(train_x, test_x, test_y)
 
-    train_x_violentflow, test_x_violentflow, test_y_violent_flow = compute_representation_model_dataset(dataset_model, 'violentflow', DATASETS_PATHS, num_output_features)
-    if(dataset_model != 'violentflow'):
-        result = train_eval_svm(train_x_violentflow, test_x_violentflow, test_y_violent_flow)
-        pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/dataset_violentflow_model_{}_{}.csv".format(dataset_model, num_output_features))
+        pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(experiment + "/dataset_{}_model_{}-{}.csv".format(dataset_name, dataset_model, num_output_features))
 
-    train_x_movies, test_x_movies, test_y_movies  = compute_representation_model_dataset(dataset_model, 'movies', DATASETS_PATHS, num_output_features)
+        join_args.extend([train_x, test_x, test_y])
+
     
-    if(dataset_model != 'movies')
-        result = train_eval_svm(train_x_movies, test_x_movies, test_y_movies)
-        pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/dataset_movies_model_{}_{}.csv".format(dataset_model, num_output_features))
-
-    join_train_x, join_test_x, join_test_y = join_datasets(train_x_hocky, train_x_violentflow, train_x_movies, test_x_hocky, test_x_violentflow, test_x_movies, test_y_hocky, test_y_violent_flow, test_y_movies)
+    join_train_x, join_test_x, join_test_y = join_datasets(join_retrain_args)
 
     result = train_eval_svm(join_train_x, join_test_x, join_test_y)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/dataset_join_model_{}_{}.csv".format(dataset_model, num_output_features))
+    pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(experiment + "/dataset_join_model_{}-{}.csv".format(dataset_model, num_output_features))
 
 
-def compute_all(num_output_features):
+def compute_1(num_output_features):
+
+    experiment = 'experiment_1'
+    
+    join_args = []
+    for dataset_name in datasets_paths.keys():
+        dataset_model = dataset_name
+        train_x, test_x, test_y = compute_representation_model_dataset(dataset_model, dataset_name, num_output_features)
+        result = train_eval_svm(train_x, test_x, test_y)
+
+        pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(experiment + "/dataset_{}_model_{}-{}.csv".format(dataset_name, dataset_model, num_output_features))
+
+        join_args.extend([train_x, test_x, test_y])
 
     
-    # Compute the inner represention on the 3 datasets independently
-    train_x_hocky, test_x_hocky, test_y_hocky = compute_representation('hocky', num_output_features)
-    result = train_eval_svm(train_x_hocky, test_x_hocky, test_y_hocky)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_hocky_{}.csv".format(num_output_features))
-    
-
-    train_x_violentflow, test_x_violentflow, test_y_violent_flow = compute_representation('violentflow', datasets_paths, num_output_features)
-    result = train_eval_svm(train_x_violentflow, test_x_violentflow, test_y_violent_flow)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_violentflow_{}.csv".format(num_output_features))
-
-    train_x_movies, test_x_movies, test_y_movies  = compute_representation('movies', datasets_paths, num_output_features)
-    result = train_eval_svm(train_x_movies, test_x_movies, test_y_movies)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_movies_{}.csv".format(num_output_features))
-
-    join_train_x, join_test_x, join_test_y = join_datasets(train_x_hocky, train_x_violentflow, train_x_movies, test_x_hocky, test_x_violentflow, test_x_movies, test_y_hocky, test_y_violent_flow, test_y_movies)
+    join_train_x, join_test_x, join_test_y = join_datasets(join_retrain_args)
 
     result = train_eval_svm(join_train_x, join_test_x, join_test_y)
-    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_join_{}.csv".format(num_output_features))
+    pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(experiment + "/dataset_join_model_{}-{}.csv".format(dataset_model, num_output_features))
 
 
 
@@ -264,18 +256,26 @@ def create_dirs():
     experiments = ['experiment_1', 'experiment_2']
 
     for experiment in experiments:
+        if not os.path.exists(experiment):
+            os.makedirs(experiment)
 
-        if not os.path.exists(experiment + 'results_svm'):
-            os.makedirs(experiment + 'results_svm_cross')
+        path = os.path.join(experiment, 'results_svm')
+        if not os.path.exists(path):
+            os.makedirs(path)
 
-        if not os.path.exists(experiment + 'results_svm'):
-            os.makedirs(experiment + 'results_svm')
+        path = os.path.join(experiment, 'results_svm_cross')
+        if not os.path.exists(path):
+            os.makedirs(path
 
-        if not os.path.exists(experiment + 'results_cross_original'):
-            os.makedirs(experiment + 'results_original_cross')
+        path = os.path.join(experiment, 'results_original')
+        if not os.path.exists(path):
+            os.makedirs(path)
 
-        if not os.path.exists(experiment + 'results_original'):
-            os.makedirs(experiment + 'results_original')
+        path = os.path.join(experiment, 'results_cross_original')
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        
 
     
 def eval_original_model(pred_y, test_y):
