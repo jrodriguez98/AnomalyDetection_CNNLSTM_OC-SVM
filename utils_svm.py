@@ -230,6 +230,33 @@ def compute_all_cross(num_output_features, dataset_model):
     pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/dataset_join_model_{}_{}.csv".format(dataset_model, num_output_features))
 
 
+def compute_all(num_output_features):
+
+    datasets_paths = dict(
+        hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5", svm_features="svm_features/hocky_{}.csv".format(num_output_features)),
+        violentflow=dict(frames='data/raw_frames/violentflow', model="models/violentflow.h5", svm_features="svm_features/violentflow_{}.csv".format(num_output_features)),
+        movies=dict(frames='data/raw_frames/movies', model="models/movies.h5", svm_features="svm_features/movies_{}.csv".format(num_output_features))
+    )
+    # Compute the inner represention on the 3 datasets independently
+    train_x_hocky, test_x_hocky, test_y_hocky = compute_representation('hocky', datasets_paths, num_output_features)
+    result = train_eval_svm(train_x_hocky, test_x_hocky, test_y_hocky)
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_hocky_{}.csv".format(num_output_features))
+    
+
+    train_x_violentflow, test_x_violentflow, test_y_violent_flow = compute_representation('violentflow', datasets_paths, num_output_features)
+    result = train_eval_svm(train_x_violentflow, test_x_violentflow, test_y_violent_flow)
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_violentflow_{}.csv".format(num_output_features))
+
+    train_x_movies, test_x_movies, test_y_movies  = compute_representation('movies', datasets_paths, num_output_features)
+    result = train_eval_svm(train_x_movies, test_x_movies, test_y_movies)
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_movies_{}.csv".format(num_output_features))
+
+    join_train_x, join_test_x, join_test_y = join_datasets(train_x_hocky, train_x_violentflow, train_x_movies, test_x_hocky, test_x_violentflow, test_x_movies, test_y_hocky, test_y_violent_flow, test_y_movies)
+
+    result = train_eval_svm(join_train_x, join_test_x, join_test_y)
+    pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_join_{}.csv".format(num_output_features))
+
+
 
 def create_dirs():
     if not os.path.exists('data/raw_frames'):
