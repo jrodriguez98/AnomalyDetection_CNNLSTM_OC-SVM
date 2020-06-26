@@ -232,13 +232,9 @@ def compute_all_cross(num_output_features, dataset_model):
 
 def compute_all(num_output_features):
 
-    datasets_paths = dict(
-        hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5", svm_features="svm_features/hocky_{}.csv".format(num_output_features)),
-        violentflow=dict(frames='data/raw_frames/violentflow', model="models/violentflow.h5", svm_features="svm_features/violentflow_{}.csv".format(num_output_features)),
-        movies=dict(frames='data/raw_frames/movies', model="models/movies.h5", svm_features="svm_features/movies_{}.csv".format(num_output_features))
-    )
+    
     # Compute the inner represention on the 3 datasets independently
-    train_x_hocky, test_x_hocky, test_y_hocky = compute_representation('hocky', datasets_paths, num_output_features)
+    train_x_hocky, test_x_hocky, test_y_hocky = compute_representation('hocky', num_output_features)
     result = train_eval_svm(train_x_hocky, test_x_hocky, test_y_hocky)
     pd.DataFrame(data=result, dtype=np.float).to_csv("results_svm/results_svm_hocky_{}.csv".format(num_output_features))
     
