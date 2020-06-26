@@ -291,29 +291,4 @@ if execute_original:
 
     pd.DataFrame(results).to_csv("results.csv")
 
-else:
-    from run_svm import compute_representation
-    from sklearn.metrics import accuracy_score, classification_report
-
-    def eval_model(pred_y, test_y):
-
-        print(test_y)
-
-        test_y = [0 if test_y[i] == 1 else 1 for i in range(len(test_y))]
-        
-        result = classification_report(test_y, pred_y.round())
-        print(result)
-        
-        return result
-
-
-    datasets_paths = dict(
-        hocky=dict(frames='data/raw_frames/hocky', model="models/hocky.h5"),
-        violentflow=dict(frames='data/raw_frames/violentflow', model="models/violentflow.h5"),
-        movies=dict(frames='data/raw_frames/movies', model="models/movies.h5")
-    )
-
-    _, pred_y, test_y = compute_representation('hocky', 'hocky', datasets_paths, "all", False)
-
-    eval_model(pred_y, test_y)
 
