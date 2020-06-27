@@ -235,6 +235,35 @@ def natural_sort(l):
 
 
 
+def get_sequences_x(data_paths, figure_shape, seq_length,classes=1, use_augmentation = False, use_crop=True, crop_x_y=None):
+    X = []
+    seq_len = 0
+    for data_path in data_paths:
+        frames = sorted(glob.glob(os.path.join(data_path, '*jpg')))
+        x = frame_loader(frames, figure_shape)
+        if(crop_x_y):
+            x = [crop_img__remove_Dark(x_,crop_x_y[0],crop_x_y[1],x_.shape[0],x_.shape[1],figure_shape) for x_ in x]
+        if use_augmentation:
+            rand = scipy.random.random()
+            corner=""
+            if rand > 0.5:
+                if(use_crop):
+                    corner=random.choice(corner_keys)
+                    x = [crop_img(x_,figure_shape,0.7,corner) for x_ in x]
+                x = [frame.transpose(1, 0, 2) for frame in x]
+                if(Debug_Print_AUG):
+                    to_write = [list(a) for a in zip(frames, x)]
+                    [cv2.imwrite(x_[0] + "_" + corner, x_[1] * 255) for x_ in to_write]
+
+        x = [x[i] - x[i+1] for i in range(len(x)-1)]
+        X.append(x)
+        
+    X = pad_sequences(X, maxlen=seq_length, padding='pre', truncating='pre')
+    if classes > 1:
+        x_ = to_categorical(x_,classes)
+    return np.array(X)
+
+
 # def generate_augmentations(data_path,figure_shape = 244, force = False):
 #     seq_len = 0
 #     crop_path = data_path + "_crop"

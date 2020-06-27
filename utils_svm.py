@@ -3,13 +3,37 @@ from sklearn.svm import OneClassSVM
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 import glob
-from DatasetBuilder import frame_loader, pad_sequences, get_sequences, createDataset
+from DatasetBuilder import frame_loader, pad_sequences, get_sequences, createDataset, get_sequences_x
 from random import shuffle
 from keras.utils import Sequence
 from keras.models import load_model, Model
 import numpy as np
 import pandas as pd
 import math
+
+
+
+def create_dirs():
+    if not os.path.exists('data/raw_frames'):
+        os.makedirs('data/raw_frames')
+
+    if not os.path.exists('models'):
+        os.makedirs('models')
+    
+    experiments = ['experiment_1', 'experiment_2']
+
+    for experiment in experiments:
+        if not os.path.exists(experiment):
+            os.makedirs(experiment)
+
+        path = os.path.join(experiment, 'results_svm')
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        path = os.path.join(experiment, 'results_original')
+        if not os.path.exists(path):
+            os.makedirs(path)
+
 
 def get_positive_class_path(dataset_name, dataset_frame_path):
     """Return a train/test split of the paths
@@ -60,33 +84,7 @@ def get_positive_class_path(dataset_name, dataset_frame_path):
     return train_path, test_path, labels_test
 
 
-def get_sequences_x(data_paths, figure_shape, seq_length,classes=1, use_augmentation = False, use_crop=True, crop_x_y=None):
-    X = []
-    seq_len = 0
-    for data_path in data_paths:
-        frames = sorted(glob.glob(os.path.join(data_path, '*jpg')))
-        x = frame_loader(frames, figure_shape)
-        if(crop_x_y):
-            x = [crop_img__remove_Dark(x_,crop_x_y[0],crop_x_y[1],x_.shape[0],x_.shape[1],figure_shape) for x_ in x]
-        if use_augmentation:
-            rand = scipy.random.random()
-            corner=""
-            if rand > 0.5:
-                if(use_crop):
-                    corner=random.choice(corner_keys)
-                    x = [crop_img(x_,figure_shape,0.7,corner) for x_ in x]
-                x = [frame.transpose(1, 0, 2) for frame in x]
-                if(Debug_Print_AUG):
-                    to_write = [list(a) for a in zip(frames, x)]
-                    [cv2.imwrite(x_[0] + "_" + corner, x_[1] * 255) for x_ in to_write]
 
-        x = [x[i] - x[i+1] for i in range(len(x)-1)]
-        X.append(x)
-        
-    X = pad_sequences(X, maxlen=seq_length, padding='pre', truncating='pre')
-    if classes > 1:
-        x_ = to_categorical(x_,classes)
-    return np.array(X)
 
 
 class Dataset_Sequence(Sequence):
@@ -111,6 +109,8 @@ class Dataset_Sequence(Sequence):
 
 def get_generators_svm(dataset_name, dataset_frames_path, classes=1, use_aug=False,
                    use_crop=True, crop_dark=None):
+
+    from constant import FIX_LEN, BATCH_SIZE, FIGURE_SIZE
 
     train_path, test_path, test_y = get_positive_class_path(dataset_name, dataset_frames_path)
 
@@ -156,7 +156,7 @@ def get_model(dataset_model_path, num_output_features=10):
         input_layer = model.input
         output_layer = model.layers[index].output
 
-        intermediate_model = Model(inputs=model.input, output=output_layer) # New model for deep representation
+        intermediate_model = Model(inputs=input_layer, output=output_layer) # New model for deep representation
 
         return intermediate_model
     
@@ -164,12 +164,12 @@ def get_model(dataset_model_path, num_output_features=10):
         return model
 
 
-def compute_representation_model_dataset(dataset_model, dataset_name, num_output_features, get_train=True):
+def compute_representation_model_dataset(dataset_name, model_path, frames_path, num_output_features, get_train=True):
     # Take the generators from "dataset_name" path
-    train_x, test_x, test_y, avg_length, len_train, len_test = get_generators_svm(dataset_name, DATASETS_PATHS[dataset_name]['frames'], classes=1, use_aug=False,
+    train_x, test_x, test_y, avg_length, len_train, len_test = get_generators_svm(dataset_name, frames_path, classes=1, use_aug=False,
                    use_crop=True, crop_dark=None)
     # Get the 'dataset_model' model
-    model = get_model(DATASETS_PATHS[dataset_model]['model'], num_output_features=num_output_features)
+    model = get_model(model_path, num_output_features=num_output_features)
 
     if (get_train):
         train_x = model.predict_generator(train_x)
@@ -204,84 +204,73 @@ def train_eval_svm(train_x, test_x, test_y):
     return result
 
 
-def compute_2(num_output_features, dataset_model):
+def validate_experiment(experiment, dataset_model):
 
-    experiment = 'experiment_2'
-    
-    join_args = []
-    for dataset_name in datasets_paths.keys():
-        train_x, test_x, test_y = compute_representation_model_dataset(dataset_model, dataset_name, num_output_features)
-        result = train_eval_svm(train_x, test_x, test_y)
+    if (experiment == 1):
+        dir_experiment = 'experiment_1'
+    elif(experiment == 2):
+        dir_experiment = 'experiment_2'
+        if(dataset_model == None):
+            raise Exception('"dataset_model" can not be None in experiment 2')
+    else:
+        raise Exception('"num_experiment" can not be {}, possible values [1, 2]'.format(experiment))
 
-        pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(experiment + "/dataset_{}_model_{}-{}.csv".format(dataset_name, dataset_model, num_output_features))
-
-        join_args.extend([train_x, test_x, test_y])
-
-    
-    join_train_x, join_test_x, join_test_y = join_datasets(join_retrain_args)
-
-    result = train_eval_svm(join_train_x, join_test_x, join_test_y)
-    pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(experiment + "/dataset_join_model_{}-{}.csv".format(dataset_model, num_output_features))
+    return dir_experiment
 
 
-def compute_1(num_output_features):
-
-    experiment = 'experiment_1'
-    
-    join_args = []
-    for dataset_name in datasets_paths.keys():
-        dataset_model = dataset_name
-        train_x, test_x, test_y = compute_representation_model_dataset(dataset_model, dataset_name, num_output_features)
-        result = train_eval_svm(train_x, test_x, test_y)
-
-        pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(experiment + "/dataset_{}_model_{}-{}.csv".format(dataset_name, dataset_model, num_output_features))
-
-        join_args.extend([train_x, test_x, test_y])
-
-    
-    join_train_x, join_test_x, join_test_y = join_datasets(join_retrain_args)
-
-    result = train_eval_svm(join_train_x, join_test_x, join_test_y)
-    pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(experiment + "/dataset_join_model_{}-{}.csv".format(dataset_model, num_output_features))
-
-
-
-def create_dirs():
-    if not os.path.exists('data/raw_frames'):
-        os.makedirs('data/raw_frames')
-
-    if not os.path.exists('models'):
-        os.makedirs('models')
-    
-    experiments = ['experiment_1', 'experiment_2']
-
-    for experiment in experiments:
-        if not os.path.exists(experiment):
-            os.makedirs(experiment)
-
-        path = os.path.join(experiment, 'results_svm')
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        path = os.path.join(experiment, 'results_svm_cross')
-        if not os.path.exists(path):
-            os.makedirs(path
-
-        path = os.path.join(experiment, 'results_original')
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        path = os.path.join(experiment, 'results_cross_original')
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        
-
-    
 def eval_original_model(pred_y, test_y):
 
     test_y = [0 if test_y[i] == 1 else 1 for i in range(len(test_y))]
     
-    result = classification_report(test_y, pred_y.round())
+    result = classification_report(test_y, pred_y.round(), output_dict=True)
     
     return result
+
+
+def compute_svm_experiment(experiment, num_output_features, dataset_model=None):
+
+    from constant import DATASETS_PATHS
+
+    dir_experiment = validate_experiment(experiment, dataset_model)
+    
+    join_args = []
+    for dataset_name in DATASETS_PATHS.keys():
+        if (experiment == 1):
+            dataset_model = dataset_name
+
+        train_x, test_x, test_y = compute_representation_model_dataset(dataset_name, DATASETS_PATHS[dataset_model]['model'], DATASETS_PATHS[dataset_model]['frames'], num_output_features)
+        join_args.extend([train_x, test_x, test_y])
+
+        if (experiment == 2 and (dataset_model == dataset_name)): # Experiment 2 just compute cross model-dataset
+            continue
+
+        result = train_eval_svm(train_x, test_x, test_y)
+        pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(dir_experiment + "/results_svm/dataset_{}_model_{}-{}.csv".format(dataset_name, dataset_model, num_output_features))
+
+    
+    join_train_x, join_test_x, join_test_y = join_datasets(join_args)
+
+    result = train_eval_svm(join_train_x, join_test_x, join_test_y)
+
+    pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(dir_experiment + "/results_svm/dataset_join_model-{}.csv".format(num_output_features))
+
+
+
+def compute_original_experiment(experiment, dataset_model=None):
+
+    from constant import DATASETS_PATHS
+
+    dir_experiment = validate_experiment(experiment, dataset_model)
+
+    for dataset_name in DATASETS_PATHS.keys(): 
+        if (experiment == 1):
+            dataset_model = dataset_name
+
+        if (experiment == 2 and (dataset_model == dataset_name)):
+            continue
+
+        _, pred_y, test_y = compute_representation_model_dataset(dataset_name, DATASETS_PATHS[dataset_model]['model'], DATASETS_PATHS[dataset_model]['frames'], 'all', False)
+
+        result = eval_original_model(pred_y, test_y)
+
+        pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(dir_experiment + "/results_original/dataset_{}_model_{}.csv".format(dataset_name, dataset_model))
