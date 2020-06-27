@@ -1,20 +1,20 @@
 import os
 from itertools import chain
-import tensorflow as tf
 
-from tensorflow import keras
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, Callback
-from tensorflow.keras.optimizers import RMSprop, Adam
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau, Callback
+from keras.optimizers import RMSprop, Adam
 
 import pandas as pd
-from tensorflow.keras.applications import Xception, ResNet50, InceptionV3, MobileNet, VGG19, DenseNet121, InceptionResNetV2, VGG16
-from tensorflow.keras.layers import LSTM, ConvLSTM2D
+from keras.applications import Xception, ResNet50, InceptionV3, MobileNet, VGG19, DenseNet121, InceptionResNetV2, VGG16
+from keras.layers import LSTM, ConvLSTM2D
 import BuildModel_basic
 import DatasetBuilder
 
+import numpy as np
+
 from numpy.random import seed, shuffle
 
-
+from tensorflow import set_random_seed
 from collections import defaultdict
 
 
@@ -37,9 +37,7 @@ def train_eval_network(dataset_name, train_gen, validate_gen, test_x, test_y, se
                        optimizer, cnn_train_type, pre_weights, lstm_conf, len_train, len_valid, dropout, classes,
                        patience_es=15, patience_lr=5, save=False):
     """the function build, compine fit and evaluate a certain architechtures on a dataset"""
-    tf.random.set_seed(2)
-    
-
+    set_random_seed(2)
     seed(1)
     result = dict(dataset=dataset_name, cnn_train=cnn_train_type,
                   cnn=cnn_arch.__name__, lstm=lstm_conf[0].__name__, epochs=epochs,
@@ -99,7 +97,7 @@ def train_eval_network(dataset_name, train_gen, validate_gen, test_x, test_y, se
             os.mkdir(models_dir)
 
         model_path = os.path.join(models_dir, dataset_name) + '.h5'
-        model.save(model_path, save_format='h5')
+        model.save(model_path)
 
     return result
 
@@ -123,7 +121,7 @@ def get_generators(dataset_name, dataset_videos, datasets_frames, fix_len, figur
                                                  use_aug=False, use_crop=False, crop_x_y=crop_x_y, classes=classes)
     test_x, test_y = DatasetBuilder.get_sequences(test_path, test_y, figure_size, avg_length, crop_x_y=crop_x_y,
                                                   classes=classes)
-
+    
     return train_gen, validate_gen, test_x, test_y, avg_length, len_train, len_valid
 
 
@@ -202,6 +200,18 @@ datasets_videos = dict(
     movies=dict(movies="data/raw_videos/movies")
 )
 
+datasets_frames = dict(
+    hocky=dict(hocky="data/raw_frames/hocky"),
+    violentflow=dict(violentflow="data/raw_frames/violentflow"),
+    movies=dict(movies="data/raw_frames/movies")
+)
+
+datasets_models = dict(
+    hocky=dict(hocky="models/hocky.h5"),
+    violentflow=dict(violentflow="data/raw_frames/violentflow.h5"),
+    movies=dict(movies="data/raw_frames/movies.h5")
+)
+
 crop_dark = dict(
     hocky=(11, 38),
     violentflow=None,
@@ -226,54 +236,59 @@ classes = 1
 cnns_arch = dict(ResNet50=ResNet50, InceptionV3=InceptionV3, VGG19=VGG19)  #
 learning_rates = [1e-4, 1e-3]
 use_augs = [True, False, ]
-fix_lens = [10, 20]
+fix_lens = [20, 10]
 optimizers = [(RMSprop, {}), (Adam, {})]
 dropouts = [0.0, 0.5]
-cnn_train_types = ['retrain','static']
+cnn_train_types = ['retrain', 'static']
 
-apply_hyper = True
+execute_original = False
+apply_hyper = False
 
-if apply_hyper:
-    # the hyper tunning symulate the architechture behavior
-    # we set the batch_epoch_ratio - reduced by X to have the hypertunning faster with epoches shorter
-    hyper, results = hyper_tune_network(dataset_name='hocky', epochs=30,
-                                        batch_size=batch_size, batch_epoch_ratio=1, figure_size=figure_size,
-                                        initial_weights=initial_weights, lstm=lstm,
-                                        cnns_arch=cnns_arch, learning_rates=learning_rates,
-                                        optimizers=optimizers, cnn_train_types=cnn_train_types, dropouts=dropouts,
-                                        classes=classes, use_augs=use_augs, fix_lens=fix_lens)
+if execute_original:
+    if apply_hyper:
+        # the hyper tunning symulate the architechture behavior
+        # we set the batch_epoch_ratio - reduced by X to have the hypertunning faster with epoches shorter
+        hyper, results = hyper_tune_network(dataset_name='hocky', epochs=30,
+                                            batch_size=batch_size, batch_epoch_ratio=1, figure_size=figure_size,
+                                            initial_weights=initial_weights, lstm=lstm,
+                                            cnns_arch=cnns_arch, learning_rates=learning_rates,
+                                            optimizers=optimizers, cnn_train_types=cnn_train_types, dropouts=dropouts,
+                                            classes=classes, use_augs=use_augs, fix_lens=fix_lens)
 
-    pd.DataFrame(results).to_csv("results_hyper.csv")
-    cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = hyper['cnn_arch'], \
-                                                                                    hyper['learning_rate'], \
-                                                                                    hyper['optimizer'], \
-                                                                                    hyper['cnn_train_type'], \
-                                                                                    hyper['dropout'], hyper['use_aug'], \
-                                                                                    hyper['seq_len'],
-else:
-    results = []
-    cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = ResNet50, 0.0001, (
-    RMSprop, {}), 'static', 0.0, True, 20
+        pd.DataFrame(results).to_csv("results_hyper.csv")
+        cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = hyper['cnn_arch'], \
+                                                                                        hyper['learning_rate'], \
+                                                                                        hyper['optimizer'], \
+                                                                                        hyper['cnn_train_type'], \
+                                                                                        hyper['dropout'], hyper['use_aug'], \
+                                                                                        hyper['seq_len'],
+    else:
+        results = []
+        cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = ResNet50, 0.0001, (
+        RMSprop, {}), 'retrain', 0.0, True, 20
 
-# apply best architechture on all datasets with more epochs
-for dataset_name, dataset_videos in datasets_videos.items():
-    train_gen, validate_gen, test_x, test_y, seq_len, len_train, len_valid = get_generators(dataset_name,
-                                                                                            dataset_videos,
-                                                                                            datasets_frames, fix_len,
-                                                                                            figure_size,
-                                                                                            force=force,
-                                                                                            classes=classes,
-                                                                                            use_aug=use_aug,
-                                                                                            use_crop=True,
-                                                                                            crop_dark=crop_dark)
-    result = train_eval_network(epochs=50, dataset_name=dataset_name, train_gen=train_gen, validate_gen=validate_gen,
-                                test_x=test_x, test_y=test_y, seq_len=seq_len, batch_size=batch_size,
-                                batch_epoch_ratio=0.5, initial_weights=initial_weights, size=figure_size,
-                                cnn_arch=cnn_arch, learning_rate=learning_rate,
-                                optimizer=optimizer, cnn_train_type=cnn_train_type,
-                                pre_weights=weights, lstm_conf=lstm, len_train=len_train, len_valid=len_valid,
-                                dropout=dropout, classes=classes, save=True)
-    results.append(result)
-    pd.DataFrame(results).to_csv("results_datasets.csv")
-    print(result)
-pd.DataFrame(results).to_csv("results.csv")
+    # apply best architechture on all datasets with more epochs
+    for dataset_name, dataset_videos in datasets_videos.items():
+        train_gen, validate_gen, test_x, test_y, seq_len, len_train, len_valid = get_generators(dataset_name,
+                                                                                                dataset_videos,
+                                                                                                datasets_frames, fix_len,
+                                                                                                figure_size,
+                                                                                                force=force,
+                                                                                                classes=classes,
+                                                                                                use_aug=use_aug,
+                                                                                                use_crop=True,
+                                                                                                crop_dark=crop_dark)
+        result = train_eval_network(epochs=50, dataset_name=dataset_name, train_gen=train_gen, validate_gen=validate_gen,
+                                    test_x=test_x, test_y=test_y, seq_len=seq_len, batch_size=batch_size,
+                                    batch_epoch_ratio=0.5, initial_weights=initial_weights, size=figure_size,
+                                    cnn_arch=cnn_arch, learning_rate=learning_rate,
+                                    optimizer=optimizer, cnn_train_type=cnn_train_type,
+                                    pre_weights=weights, lstm_conf=lstm, len_train=len_train, len_valid=len_valid,
+                                    dropout=dropout, classes=classes, save=True)
+        results.append(result)
+        pd.DataFrame(results).to_csv("results_datasets.csv")
+        print(result)
+
+    pd.DataFrame(results).to_csv("results.csv")
+
+
