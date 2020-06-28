@@ -15,11 +15,7 @@ def main():
         for num_output in num_outputs:
             compute_svm_experiment(2, num_output, dataset_model)
 
-            
         
-    
-        
-
 if __name__ == "__main__":
 
     main()
