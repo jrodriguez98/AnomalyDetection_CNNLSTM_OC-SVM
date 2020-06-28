@@ -12,11 +12,15 @@ def main():
     for dataset_model in DATASETS_PATHS.keys():
         compute_original_experiment(2, dataset_model) # Compute the results of the original model with cross model-dataset for experiment 2
 
+    for dataset_model in DATASETS_PATHS.keys():
         for num_output in num_outputs:
-            print("DATASET MODEL: " + dataset_model)
-            print("NUM OUTPUTS: " + num_output)
+
+            print("DATASET MODEL: " + str(dataset_model))
+            print("NUM OUTPUTS: " + str(num_output))
             compute_svm_experiment(2, num_output, dataset_model)
 
+
+    
         
 if __name__ == "__main__":
 
