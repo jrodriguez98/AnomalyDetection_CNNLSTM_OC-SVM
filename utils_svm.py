@@ -250,6 +250,8 @@ def compute_svm_experiment(experiment, num_output_features, dataset_model=None):
     
     join_train_x, join_test_x, join_test_y = join_datasets(join_args)
 
+    del join_args[:]
+
     result = train_eval_svm(join_train_x, join_test_x, join_test_y)
 
     if (experiment == 1):
