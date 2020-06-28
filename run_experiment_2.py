@@ -13,6 +13,8 @@ def main():
         compute_original_experiment(2, dataset_model) # Compute the results of the original model with cross model-dataset for experiment 2
 
         for num_output in num_outputs:
+            print("DATASET MODEL: " + dataset_model)
+            print("NUM OUTPUTS: " + num_output)
             compute_svm_experiment(2, num_output, dataset_model)
 
         
