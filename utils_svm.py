@@ -252,7 +252,12 @@ def compute_svm_experiment(experiment, num_output_features, dataset_model=None):
 
     result = train_eval_svm(join_train_x, join_test_x, join_test_y)
 
-    pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(dir_experiment + "/results_svm/dataset_join_model-{}.csv".format(num_output_features))
+    if (experiment == 1):
+        name_join = dir_experiment + "/results_svm/dataset_join_model-{}.csv".format(num_output_features)
+    else:
+        name_join = dir_experiment + "/results_svm/dataset_join_model_{}-{}.csv".format(dataset_model, num_output_features)
+    
+    pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(name_join)
 
 
 
