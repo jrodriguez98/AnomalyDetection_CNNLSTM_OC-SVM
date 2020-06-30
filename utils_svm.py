@@ -238,7 +238,7 @@ def compute_svm_experiment(experiment, num_output_features, dataset_model=None):
         if (experiment == 1):
             dataset_model = dataset_name
 
-        train_x, test_x, test_y = compute_representation_model_dataset(dataset_name, DATASETS_PATHS[dataset_model]['model'], DATASETS_PATHS[dataset_model]['frames'], num_output_features)
+        train_x, test_x, test_y = compute_representation_model_dataset(dataset_name, DATASETS_PATHS[dataset_model]['model'], DATASETS_PATHS[dataset_name]['frames'], num_output_features)
         join_args.extend([train_x, test_x, test_y])
 
         if (experiment == 2 and (dataset_model == dataset_name)): # Experiment 2 just compute cross model-dataset
@@ -276,7 +276,7 @@ def compute_original_experiment(experiment, dataset_model=None):
         if (experiment == 2 and (dataset_model == dataset_name)):
             continue
 
-        _, pred_y, test_y = compute_representation_model_dataset(dataset_name, DATASETS_PATHS[dataset_model]['model'], DATASETS_PATHS[dataset_model]['frames'], 'all', False)
+        _, pred_y, test_y = compute_representation_model_dataset(dataset_name, DATASETS_PATHS[dataset_model]['model'], DATASETS_PATHS[dataset_name]['frames'], 'all', False)
 
         result = eval_original_model(pred_y, test_y)
 
