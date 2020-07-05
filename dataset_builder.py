@@ -4,17 +4,20 @@ import cv2
 import pickle
 import glob
 import numpy as np
-from keras.preprocessing.image import load_img, img_to_array
-from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 from collections import defaultdict
-from keras.preprocessing import image
+from tensorflow.keras.preprocessing import image
 import random
 
 corner_keys = ["Center","Left_up","Left_down","Right_up","Right_down"]
 
 Debug_Print_AUG=False
+
+
+
 
 def save_figures_from_video(dataset_video_path, video_filename, suffix,figures_path,skip_frames = 25,apply_norm = True, apply_diff = True,fix_len = None):
     seq_len = 0
@@ -25,7 +28,7 @@ def save_figures_from_video(dataset_video_path, video_filename, suffix,figures_p
 
     video_file = os.path.join(dataset_video_path, video_filename + suffix)
     label = 0
-    #print('Extracting frames from video: ', video_file)
+    # print('Extracting frames from video: ', video_file)
 
     videoCapture = cv2.VideoCapture(video_file)
     if fix_len is not None:
@@ -230,6 +233,35 @@ def natural_sort(l):
     alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
     return sorted(l, key = alphanum_key)
 
+
+
+def get_sequences_x(data_paths, figure_shape, seq_length,classes=1, use_augmentation = False, use_crop=True, crop_x_y=None):
+    X = []
+    seq_len = 0
+    for data_path in data_paths:
+        frames = sorted(glob.glob(os.path.join(data_path, '*jpg')))
+        x = frame_loader(frames, figure_shape)
+        if(crop_x_y):
+            x = [crop_img__remove_Dark(x_,crop_x_y[0],crop_x_y[1],x_.shape[0],x_.shape[1],figure_shape) for x_ in x]
+        if use_augmentation:
+            rand = scipy.random.random()
+            corner=""
+            if rand > 0.5:
+                if(use_crop):
+                    corner=random.choice(corner_keys)
+                    x = [crop_img(x_,figure_shape,0.7,corner) for x_ in x]
+                x = [frame.transpose(1, 0, 2) for frame in x]
+                if(Debug_Print_AUG):
+                    to_write = [list(a) for a in zip(frames, x)]
+                    [cv2.imwrite(x_[0] + "_" + corner, x_[1] * 255) for x_ in to_write]
+
+        x = [x[i] - x[i+1] for i in range(len(x)-1)]
+        X.append(x)
+        
+    X = pad_sequences(X, maxlen=seq_length, padding='pre', truncating='pre')
+    if classes > 1:
+        x_ = to_categorical(x_,classes)
+    return np.array(X)
 
 
 # def generate_augmentations(data_path,figure_shape = 244, force = False):

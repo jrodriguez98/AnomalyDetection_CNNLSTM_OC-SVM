@@ -7,8 +7,10 @@ from keras.optimizers import RMSprop, Adam
 import pandas as pd
 from keras.applications import Xception, ResNet50, InceptionV3, MobileNet, VGG19, DenseNet121, InceptionResNetV2, VGG16
 from keras.layers import LSTM, ConvLSTM2D
-import BuildModel_basic
-import DatasetBuilder
+import build_model_basic
+import dataset_builder
+
+import numpy as np
 
 from numpy.random import seed, shuffle
 
@@ -42,7 +44,7 @@ def train_eval_network(dataset_name, train_gen, validate_gen, test_x, test_y, se
                   learning_rate=learning_rate, batch_size=batch_size, dropout=dropout,
                   optimizer=optimizer[0].__name__, initial_weights=initial_weights, seq_len=seq_len)
     print("run experimnt " + str(result))
-    model = BuildModel_basic.build(size=size, seq_len=seq_len, learning_rate=learning_rate,
+    model = build_model_basic.build(size=size, seq_len=seq_len, learning_rate=learning_rate,
                                    optimizer_class=optimizer, initial_weights=initial_weights,
                                    cnn_class=cnn_arch, pre_weights=pre_weights, lstm_conf=lstm_conf,
                                    cnn_train_type=cnn_train_type, dropout=dropout, classes=classes)
@@ -104,7 +106,7 @@ def get_generators(dataset_name, dataset_videos, datasets_frames, fix_len, figur
                    use_crop=True, crop_dark=None):
     train_path, valid_path, test_path, \
     train_y, valid_y, test_y, \
-    avg_length = DatasetBuilder.createDataset(dataset_videos, datasets_frames, fix_len, force=force)
+    avg_length = dataset_builder.createDataset(dataset_videos, datasets_frames, fix_len, force=force)
 
     if fix_len is not None:
         avg_length = fix_len
@@ -113,13 +115,13 @@ def get_generators(dataset_name, dataset_videos, datasets_frames, fix_len, figur
         crop_x_y = crop_dark[dataset_name]
 
     len_train, len_valid = len(train_path), len(valid_path)
-    train_gen = DatasetBuilder.data_generator(train_path, train_y, batch_size, figure_size, avg_length, use_aug=use_aug,
+    train_gen = dataset_builder.data_generator(train_path, train_y, batch_size, figure_size, avg_length, use_aug=use_aug,
                                               use_crop=use_crop, crop_x_y=crop_x_y, classes=classes)
-    validate_gen = DatasetBuilder.data_generator(valid_path, valid_y, batch_size, figure_size, avg_length,
+    validate_gen = dataset_builder.data_generator(valid_path, valid_y, batch_size, figure_size, avg_length,
                                                  use_aug=False, use_crop=False, crop_x_y=crop_x_y, classes=classes)
-    test_x, test_y = DatasetBuilder.get_sequences(test_path, test_y, figure_size, avg_length, crop_x_y=crop_x_y,
+    test_x, test_y = dataset_builder.get_sequences(test_path, test_y, figure_size, avg_length, crop_x_y=crop_x_y,
                                                   classes=classes)
-
+    
     return train_gen, validate_gen, test_x, test_y, avg_length, len_train, len_valid
 
 
@@ -143,7 +145,7 @@ def hyper_tune_network(dataset_name, epochs, batch_size, batch_epoch_ratio, figu
     #
 
     best_params_train = dict(optimizer=optimizers[0], learning_rate=learning_rates[0],
-                             cnn_train_type=cnn_train_types[0], cnn_arch=cnns_arch.values()[0],
+                             cnn_train_type=cnn_train_types[0], cnn_arch=list(cnns_arch.values())[0],
                              dropout=dropouts[0])
     exp_params_train = dict(optimizer=optimizers[1:], learning_rate=learning_rates[1:],
                             cnn_train_type=cnn_train_types[1:], dropout=dropouts[1:],
@@ -198,6 +200,18 @@ datasets_videos = dict(
     movies=dict(movies="data/raw_videos/movies")
 )
 
+datasets_frames = dict(
+    hocky=dict(hocky="data/raw_frames/hocky"),
+    violentflow=dict(violentflow="data/raw_frames/violentflow"),
+    movies=dict(movies="data/raw_frames/movies")
+)
+
+datasets_models = dict(
+    hocky=dict(hocky="models/hocky.h5"),
+    violentflow=dict(violentflow="data/raw_frames/violentflow.h5"),
+    movies=dict(movies="data/raw_frames/movies.h5")
+)
+
 crop_dark = dict(
     hocky=(11, 38),
     violentflow=None,
@@ -227,7 +241,7 @@ optimizers = [(RMSprop, {}), (Adam, {})]
 dropouts = [0.0, 0.5]
 cnn_train_types = ['static']
 
-apply_hyper = True
+apply_hyper = False
 
 if apply_hyper:
     # the hyper tunning symulate the architechture behavior
@@ -268,8 +282,11 @@ for dataset_name, dataset_videos in datasets_videos.items():
                                 cnn_arch=cnn_arch, learning_rate=learning_rate,
                                 optimizer=optimizer, cnn_train_type=cnn_train_type,
                                 pre_weights=weights, lstm_conf=lstm, len_train=len_train, len_valid=len_valid,
-                                dropout=dropout, classes=classes)
+                                dropout=dropout, classes=classes, save=True)
     results.append(result)
     pd.DataFrame(results).to_csv("results_datasets.csv")
     print(result)
+
 pd.DataFrame(results).to_csv("results.csv")
+
+

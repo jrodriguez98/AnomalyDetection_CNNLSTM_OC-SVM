@@ -1,18 +1,22 @@
-from keras import Input
-from keras.callbacks import Callback
-from keras.layers import Dense, Flatten, Dropout, ZeroPadding3D, ConvLSTM2D, Reshape, BatchNormalization, Activation
-from keras.layers.recurrent import LSTM
-from keras.models import Sequential, load_model
-from keras.optimizers import Adam, RMSprop
-from keras.layers.wrappers import TimeDistributed
-from keras.layers.convolutional import (Conv2D, MaxPooling3D, Conv3D,
+from tensorflow import keras
+from tensorflow.keras import Input
+from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.layers import Dense, Flatten, Dropout, ZeroPadding3D, ConvLSTM2D, Reshape, BatchNormalization, Activation
+from tensorflow.keras.layers import LSTM
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.optimizers import Adam, RMSprop
+from tensorflow.keras.layers import TimeDistributed
+from tensorflow.keras.layers import (Conv2D, MaxPooling3D, Conv3D,
     MaxPooling2D)
+
+
+
 from collections import deque
 import sys
 import logging
-from keras.applications import Xception, ResNet50, InceptionV3
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras.models import Model
+from tensorflow.keras.applications import Xception, ResNet50, InceptionV3
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
 
 
 def build(size, seq_len , learning_rate ,
@@ -22,7 +26,7 @@ def build(size, seq_len , learning_rate ,
           pre_weights , \
           lstm_conf , \
           cnn_train_type, classes = 1, dropout = 0.0):
-    input_layer = Input(shape=(seq_len, size, size, 3))
+    input_layer = keras.Input(shape=(seq_len, size, size, 3))
     if(cnn_train_type!='train'):
         if cnn_class.__name__ == "ResNet50":
             cnn = cnn_class(weights=pre_weights, include_top=False,input_shape =(size, size, 3))
