@@ -266,7 +266,7 @@ def save_json (full_path: str, data: Dict[Any, Any]) -> None:
     """
     
     with open(full_path, 'w') as file:
-        json.dump(data, file)
+        json.dump(data, file, indent=4)
 
 def eval_original_model(pred_y: np.ndarray, test_y: np.ndarray) -> Dict[str, Any]:
     """Evaluate original model predictions
