@@ -5,7 +5,7 @@ In this work we propose an **unsupervised anomaly detection** approach to detect
 
 
 ## Architecture structure
-![alt text](https://github.com/jrodriguez98/ViolenceDetection_CNNLSTM/tree/master/images/TFG_architecture.png)
+![alt text](https://github.com/jrodriguez98/ViolenceDetection_CNNLSTM/blob/master/images/TFG_architecture.png)
 
 
 ## Video datasets paths:
