@@ -7,7 +7,7 @@ from keras.optimizers import RMSprop, Adam
 import pandas as pd
 from keras.applications import Xception, ResNet50, InceptionV3, MobileNet, VGG19, DenseNet121, InceptionResNetV2, VGG16
 from keras.layers import LSTM, ConvLSTM2D
-import BuildModel_basic
+import build_model_basic
 import dataset_builder
 
 import numpy as np
@@ -44,7 +44,7 @@ def train_eval_network(dataset_name, train_gen, validate_gen, test_x, test_y, se
                   learning_rate=learning_rate, batch_size=batch_size, dropout=dropout,
                   optimizer=optimizer[0].__name__, initial_weights=initial_weights, seq_len=seq_len)
     print("run experimnt " + str(result))
-    model = BuildModel_basic.build(size=size, seq_len=seq_len, learning_rate=learning_rate,
+    model = build_model_basic.build(size=size, seq_len=seq_len, learning_rate=learning_rate,
                                    optimizer_class=optimizer, initial_weights=initial_weights,
                                    cnn_class=cnn_arch, pre_weights=pre_weights, lstm_conf=lstm_conf,
                                    cnn_train_type=cnn_train_type, dropout=dropout, classes=classes)
