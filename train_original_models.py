@@ -7,8 +7,8 @@ from keras.optimizers import RMSprop, Adam
 import pandas as pd
 from keras.applications import Xception, ResNet50, InceptionV3, MobileNet, VGG19, DenseNet121, InceptionResNetV2, VGG16
 from keras.layers import LSTM, ConvLSTM2D
-import BuildModel_basic
-import DatasetBuilder
+import build_model_basic
+import dataset_builder
 
 import numpy as np
 
@@ -44,7 +44,7 @@ def train_eval_network(dataset_name, train_gen, validate_gen, test_x, test_y, se
                   learning_rate=learning_rate, batch_size=batch_size, dropout=dropout,
                   optimizer=optimizer[0].__name__, initial_weights=initial_weights, seq_len=seq_len)
     print("run experimnt " + str(result))
-    model = BuildModel_basic.build(size=size, seq_len=seq_len, learning_rate=learning_rate,
+    model = build_model_basic.build(size=size, seq_len=seq_len, learning_rate=learning_rate,
                                    optimizer_class=optimizer, initial_weights=initial_weights,
                                    cnn_class=cnn_arch, pre_weights=pre_weights, lstm_conf=lstm_conf,
                                    cnn_train_type=cnn_train_type, dropout=dropout, classes=classes)
@@ -106,7 +106,7 @@ def get_generators(dataset_name, dataset_videos, datasets_frames, fix_len, figur
                    use_crop=True, crop_dark=None):
     train_path, valid_path, test_path, \
     train_y, valid_y, test_y, \
-    avg_length = DatasetBuilder.createDataset(dataset_videos, datasets_frames, fix_len, force=force)
+    avg_length = dataset_builder.createDataset(dataset_videos, datasets_frames, fix_len, force=force)
 
     if fix_len is not None:
         avg_length = fix_len
@@ -115,11 +115,11 @@ def get_generators(dataset_name, dataset_videos, datasets_frames, fix_len, figur
         crop_x_y = crop_dark[dataset_name]
 
     len_train, len_valid = len(train_path), len(valid_path)
-    train_gen = DatasetBuilder.data_generator(train_path, train_y, batch_size, figure_size, avg_length, use_aug=use_aug,
+    train_gen = dataset_builder.data_generator(train_path, train_y, batch_size, figure_size, avg_length, use_aug=use_aug,
                                               use_crop=use_crop, crop_x_y=crop_x_y, classes=classes)
-    validate_gen = DatasetBuilder.data_generator(valid_path, valid_y, batch_size, figure_size, avg_length,
+    validate_gen = dataset_builder.data_generator(valid_path, valid_y, batch_size, figure_size, avg_length,
                                                  use_aug=False, use_crop=False, crop_x_y=crop_x_y, classes=classes)
-    test_x, test_y = DatasetBuilder.get_sequences(test_path, test_y, figure_size, avg_length, crop_x_y=crop_x_y,
+    test_x, test_y = dataset_builder.get_sequences(test_path, test_y, figure_size, avg_length, crop_x_y=crop_x_y,
                                                   classes=classes)
     
     return train_gen, validate_gen, test_x, test_y, avg_length, len_train, len_valid
@@ -241,54 +241,52 @@ optimizers = [(RMSprop, {}), (Adam, {})]
 dropouts = [0.0, 0.5]
 cnn_train_types = ['retrain', 'static']
 
-execute_original = False
 apply_hyper = False
 
-if execute_original:
-    if apply_hyper:
-        # the hyper tunning symulate the architechture behavior
-        # we set the batch_epoch_ratio - reduced by X to have the hypertunning faster with epoches shorter
-        hyper, results = hyper_tune_network(dataset_name='hocky', epochs=30,
-                                            batch_size=batch_size, batch_epoch_ratio=1, figure_size=figure_size,
-                                            initial_weights=initial_weights, lstm=lstm,
-                                            cnns_arch=cnns_arch, learning_rates=learning_rates,
-                                            optimizers=optimizers, cnn_train_types=cnn_train_types, dropouts=dropouts,
-                                            classes=classes, use_augs=use_augs, fix_lens=fix_lens)
+if apply_hyper:
+    # the hyper tunning symulate the architechture behavior
+    # we set the batch_epoch_ratio - reduced by X to have the hypertunning faster with epoches shorter
+    hyper, results = hyper_tune_network(dataset_name='hocky', epochs=30,
+                                        batch_size=batch_size, batch_epoch_ratio=1, figure_size=figure_size,
+                                        initial_weights=initial_weights, lstm=lstm,
+                                        cnns_arch=cnns_arch, learning_rates=learning_rates,
+                                        optimizers=optimizers, cnn_train_types=cnn_train_types, dropouts=dropouts,
+                                        classes=classes, use_augs=use_augs, fix_lens=fix_lens)
 
-        pd.DataFrame(results).to_csv("results_hyper.csv")
-        cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = hyper['cnn_arch'], \
-                                                                                        hyper['learning_rate'], \
-                                                                                        hyper['optimizer'], \
-                                                                                        hyper['cnn_train_type'], \
-                                                                                        hyper['dropout'], hyper['use_aug'], \
-                                                                                        hyper['seq_len'],
-    else:
-        results = []
-        cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = ResNet50, 0.0001, (
-        RMSprop, {}), 'retrain', 0.0, True, 20
+    pd.DataFrame(results).to_csv("results_hyper.csv")
+    cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = hyper['cnn_arch'], \
+                                                                                    hyper['learning_rate'], \
+                                                                                    hyper['optimizer'], \
+                                                                                    hyper['cnn_train_type'], \
+                                                                                    hyper['dropout'], hyper['use_aug'], \
+                                                                                    hyper['seq_len'],
+else:
+    results = []
+    cnn_arch, learning_rate, optimizer, cnn_train_type, dropout, use_aug, fix_len = ResNet50, 0.0001, (
+    RMSprop, {}), 'retrain', 0.0, True, 20
 
-    # apply best architechture on all datasets with more epochs
-    for dataset_name, dataset_videos in datasets_videos.items():
-        train_gen, validate_gen, test_x, test_y, seq_len, len_train, len_valid = get_generators(dataset_name,
-                                                                                                dataset_videos,
-                                                                                                datasets_frames, fix_len,
-                                                                                                figure_size,
-                                                                                                force=force,
-                                                                                                classes=classes,
-                                                                                                use_aug=use_aug,
-                                                                                                use_crop=True,
-                                                                                                crop_dark=crop_dark)
-        result = train_eval_network(epochs=50, dataset_name=dataset_name, train_gen=train_gen, validate_gen=validate_gen,
-                                    test_x=test_x, test_y=test_y, seq_len=seq_len, batch_size=batch_size,
-                                    batch_epoch_ratio=0.5, initial_weights=initial_weights, size=figure_size,
-                                    cnn_arch=cnn_arch, learning_rate=learning_rate,
-                                    optimizer=optimizer, cnn_train_type=cnn_train_type,
-                                    pre_weights=weights, lstm_conf=lstm, len_train=len_train, len_valid=len_valid,
-                                    dropout=dropout, classes=classes, save=True)
-        results.append(result)
-        pd.DataFrame(results).to_csv("results_datasets.csv")
-        print(result)
+# apply best architechture on all datasets with more epochs
+for dataset_name, dataset_videos in datasets_videos.items():
+    train_gen, validate_gen, test_x, test_y, seq_len, len_train, len_valid = get_generators(dataset_name,
+                                                                                            dataset_videos,
+                                                                                            datasets_frames, fix_len,
+                                                                                            figure_size,
+                                                                                            force=force,
+                                                                                            classes=classes,
+                                                                                            use_aug=use_aug,
+                                                                                            use_crop=True,
+                                                                                            crop_dark=crop_dark)
+    result = train_eval_network(epochs=50, dataset_name=dataset_name, train_gen=train_gen, validate_gen=validate_gen,
+                                test_x=test_x, test_y=test_y, seq_len=seq_len, batch_size=batch_size,
+                                batch_epoch_ratio=0.5, initial_weights=initial_weights, size=figure_size,
+                                cnn_arch=cnn_arch, learning_rate=learning_rate,
+                                optimizer=optimizer, cnn_train_type=cnn_train_type,
+                                pre_weights=weights, lstm_conf=lstm, len_train=len_train, len_valid=len_valid,
+                                dropout=dropout, classes=classes, save=True)
+    results.append(result)
+    pd.DataFrame(results).to_csv("results_datasets.csv")
+    print(result)
 
-    pd.DataFrame(results).to_csv("results.csv")
+pd.DataFrame(results).to_csv("results.csv")
 
 
