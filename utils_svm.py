@@ -6,7 +6,7 @@ import glob
 from random import shuffle
 from keras.models import load_model, Model
 import numpy as np
-from utils_dataset import Dataset_Sequence
+from utils_dataset import DatasetSequence
 from typing import Dict, Tuple, Sequence, List, Any
 import json
 
@@ -86,7 +86,7 @@ def get_positive_class_path(dataset_name: str, dataset_frame_path: str) -> Tuple
     return train_path, test_path, labels_test
 
 
-def get_generators_model(dataset_name: str, dataset_frames_path: str) -> Tuple[Dataset_Sequence, Dataset_Sequence, List[int]]:
+def get_generators_model(dataset_name: str, dataset_frames_path: str) -> Tuple[DatasetSequence, DatasetSequence, List[int]]:
     """Return the generators for the pre-trained model to compute inner representations.
 
     Arguments:
@@ -104,9 +104,9 @@ def get_generators_model(dataset_name: str, dataset_frames_path: str) -> Tuple[D
 
     train_path, test_path, test_y = get_positive_class_path(dataset_name, dataset_frames_path)
    
-    train_x = Dataset_Sequence(train_path, BATCH_SIZE, FIGURE_SIZE, FIX_LEN) # Get train generator  
+    train_x = DatasetSequence(train_path, BATCH_SIZE, FIGURE_SIZE, FIX_LEN) # Get train generator  
 
-    test_x = Dataset_Sequence(test_path, BATCH_SIZE, FIGURE_SIZE, FIX_LEN) # Get test generator
+    test_x = DatasetSequence(test_path, BATCH_SIZE, FIGURE_SIZE, FIX_LEN) # Get test generator
 
     test_y = np.asarray(test_y)
 
