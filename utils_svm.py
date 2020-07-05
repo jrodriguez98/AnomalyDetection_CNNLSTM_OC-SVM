@@ -313,7 +313,7 @@ def compute_svm_experiment(experiment: int, num_output_features: Any, dataset_mo
             continue
 
         result = train_eval_svm(train_x, test_x, test_y)
-        save_json(dir_experiment + "/results_svm/dataset_{}_model_{}-{}.csv".format(dataset_name, dataset_model, num_output_features), result)
+        save_json(dir_experiment + "/results_svm/dataset_{}_model_{}-{}.json".format(dataset_name, dataset_model, num_output_features), result)
 
     
     join_train_x, join_test_x, join_test_y = join_datasets(join_args)
@@ -323,9 +323,9 @@ def compute_svm_experiment(experiment: int, num_output_features: Any, dataset_mo
     result = train_eval_svm(join_train_x, join_test_x, join_test_y)
 
     if (experiment == 1):
-        name_join = dir_experiment + "/results_svm/dataset_join_model-{}.csv".format(num_output_features)
+        name_join = dir_experiment + "/results_svm/dataset_join_model-{}.json".format(num_output_features)
     else:
-        name_join = dir_experiment + "/results_svm/dataset_join_model_{}-{}.csv".format(dataset_model, num_output_features)
+        name_join = dir_experiment + "/results_svm/dataset_join_model_{}-{}.json".format(dataset_model, num_output_features)
     
     save_json(name_join, result)
 
@@ -355,4 +355,4 @@ def compute_original_experiment(experiment: int, dataset_model: Any =None) -> No
 
         result = eval_original_model(pred_y, test_y)
 
-        save_json(dir_experiment + "/results_original/dataset_{}_model_{}.csv".format(dataset_name, dataset_model), result)
+        save_json(dir_experiment + "/results_original/dataset_{}_model_{}.json".format(dataset_name, dataset_model), result)
