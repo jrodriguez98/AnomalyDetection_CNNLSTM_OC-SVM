@@ -4,7 +4,7 @@ import pickle
 import math
 import numpy as np
 from keras.utils import Sequence
-from DatasetBuilder import get_sequences_x, save_figures_from_video
+from dataset_builder import get_sequences_x, save_figures_from_video
 from typing import Dict, List, Tuple
 
 

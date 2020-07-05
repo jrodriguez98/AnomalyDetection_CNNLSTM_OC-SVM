@@ -8,7 +8,7 @@ import pandas as pd
 from keras.applications import Xception, ResNet50, InceptionV3, MobileNet, VGG19, DenseNet121, InceptionResNetV2, VGG16
 from keras.layers import LSTM, ConvLSTM2D
 import BuildModel_basic
-import DatasetBuilder
+import dataset_builder
 
 import numpy as np
 
@@ -106,7 +106,7 @@ def get_generators(dataset_name, dataset_videos, datasets_frames, fix_len, figur
                    use_crop=True, crop_dark=None):
     train_path, valid_path, test_path, \
     train_y, valid_y, test_y, \
-    avg_length = DatasetBuilder.createDataset(dataset_videos, datasets_frames, fix_len, force=force)
+    avg_length = dataset_builder.createDataset(dataset_videos, datasets_frames, fix_len, force=force)
 
     if fix_len is not None:
         avg_length = fix_len
@@ -115,11 +115,11 @@ def get_generators(dataset_name, dataset_videos, datasets_frames, fix_len, figur
         crop_x_y = crop_dark[dataset_name]
 
     len_train, len_valid = len(train_path), len(valid_path)
-    train_gen = DatasetBuilder.data_generator(train_path, train_y, batch_size, figure_size, avg_length, use_aug=use_aug,
+    train_gen = dataset_builder.data_generator(train_path, train_y, batch_size, figure_size, avg_length, use_aug=use_aug,
                                               use_crop=use_crop, crop_x_y=crop_x_y, classes=classes)
-    validate_gen = DatasetBuilder.data_generator(valid_path, valid_y, batch_size, figure_size, avg_length,
+    validate_gen = dataset_builder.data_generator(valid_path, valid_y, batch_size, figure_size, avg_length,
                                                  use_aug=False, use_crop=False, crop_x_y=crop_x_y, classes=classes)
-    test_x, test_y = DatasetBuilder.get_sequences(test_path, test_y, figure_size, avg_length, crop_x_y=crop_x_y,
+    test_x, test_y = dataset_builder.get_sequences(test_path, test_y, figure_size, avg_length, crop_x_y=crop_x_y,
                                                   classes=classes)
     
     return train_gen, validate_gen, test_x, test_y, avg_length, len_train, len_valid
