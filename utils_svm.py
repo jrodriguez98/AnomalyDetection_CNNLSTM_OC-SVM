@@ -3,48 +3,50 @@ from sklearn.svm import OneClassSVM
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 import glob
-from DatasetBuilder import frame_loader, pad_sequences, get_sequences, createDataset, get_sequences_x
 from random import shuffle
-from keras.utils import Sequence
 from keras.models import load_model, Model
 import numpy as np
-import pandas as pd
-import math
+from utils_dataset import Dataset_Sequence
+from typing import Dict, Tuple, Sequence, List, Any
+import json
 
 
+def create_dirs_experiment(experiment: int) -> None:
+    """Create the experiment directories
 
-def create_dirs():
-    if not os.path.exists('data/raw_frames'):
-        os.makedirs('data/raw_frames')
-
-    if not os.path.exists('models'):
-        os.makedirs('models')
-    
-    experiments = ['experiment_1', 'experiment_2']
-
-    for experiment in experiments:
-        if not os.path.exists(experiment):
-            os.makedirs(experiment)
-
-        path = os.path.join(experiment, 'results_svm')
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-        path = os.path.join(experiment, 'results_original')
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-
-def get_positive_class_path(dataset_name, dataset_frame_path):
-    """Return a train/test split of the paths
+    It creates the directories needed in order to store the results
 
     Parameters:
-    datasets_frame_path (dict): key: name of the dataset, value: root directory of frames
+        experiment (int): Number of the experiment.
+
+    """
+
+    dir_experiment = validate_experiment(experiment)
+
+    if not os.path.exists(dir_experiment):
+        os.makedirs(dir_experiment)
+
+    path = os.path.join(dir_experiment, 'results_svm')
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    path = os.path.join(dir_experiment, 'results_original')
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def get_positive_class_path(dataset_name: str, dataset_frame_path: str) -> Tuple[List[str], List[str], List[int]]:
+    """Return a train/test split of the paths
+
+    Arguments:
+        dataset_name : Name of the dataset used
+        dataset_frame_path: Path to the frames of the dataset
 
     Returns:
-    train_path, test_path
-
-
+        train_path: Paths used as training dataset (only positive class)
+        test_path: Paths used as test dataset (both classes)
+        labels_test: Labels of the test set.
+    
     """
     video_frames_path_no = []
     video_frames_path_fight = []
@@ -84,56 +86,48 @@ def get_positive_class_path(dataset_name, dataset_frame_path):
     return train_path, test_path, labels_test
 
 
+def get_generators_model(dataset_name: str, dataset_frames_path: str) -> Tuple[Dataset_Sequence, Dataset_Sequence, List[int]]:
+    """Return the generators for the pre-trained model to compute inner representations.
 
+    Arguments:
+        dataset_name: Name of the dataset used
+        dataset_frame_path: Path to the frames of the dataset
 
+    Returns:
+        train_x: Generator with the training inputs for the OC-SVM.
+        test_x: Generator with the test inputs inputs for the OC-SVM.
+        test_y: Labels of test inputs.
 
-class Dataset_Sequence(Sequence):
-
-    def __init__(self, x_set, batch_size, figure_shape, seq_length, crop_x_y, classes):
-        self.x = x_set
-        self.batch_size = batch_size
-        self.figure_shape = figure_shape
-        self.seq_length = seq_length
-        self.crop_x_y = crop_x_y
-        self.classes = classes
-
-    def __len__(self):
-        return math.ceil(len(self.x) / self.batch_size)
-
-    def __getitem__(self, idx):
-        batch_x = self.x[idx * self.batch_size : (idx + 1) * self.batch_size]
-
-        X = get_sequences_x(batch_x, self.figure_shape, self.seq_length, crop_x_y=self.crop_x_y, classes=self.classes)
-
-        return X
-
-def get_generators_svm(dataset_name, dataset_frames_path, classes=1, use_aug=False,
-                   use_crop=True, crop_dark=None):
+    """
 
     from constant import FIX_LEN, BATCH_SIZE, FIGURE_SIZE
 
     train_path, test_path, test_y = get_positive_class_path(dataset_name, dataset_frames_path)
+   
+    train_x = Dataset_Sequence(train_path, BATCH_SIZE, FIGURE_SIZE, FIX_LEN) # Get train generator  
 
-    if FIX_LEN is not None:
-        avg_length = FIX_LEN
-    crop_x_y = None
-    if (crop_dark):
-        crop_x_y = crop_dark[dataset_name]
+    test_x = Dataset_Sequence(test_path, BATCH_SIZE, FIGURE_SIZE, FIX_LEN) # Get test generator
 
-    len_train, len_test = len(train_path), len(test_path)
-                            
-    train_x = Dataset_Sequence(train_path, BATCH_SIZE, FIGURE_SIZE, avg_length, crop_x_y, classes=1)
+    test_y = np.asarray(test_y)
 
-    test_x = Dataset_Sequence(test_path, BATCH_SIZE, FIGURE_SIZE, avg_length, crop_x_y, classes=1)
-
-    test_y = np.asarray(test_y) 
+    len_test = len(test_path)
 
     assert len_test == len(test_y)                                       
 
-    return train_x, test_x, test_y, avg_length, len_train, len_test
+    return train_x, test_x, test_y
 
 
-def get_model(dataset_model_path, num_output_features=10):
+def get_model(dataset_model_path: str, num_output_features=10) -> Model:
+    """Return the model with the a number of output features
+
+    Arguments:
+        dataset_model_path: Path to the pre-trained model
+        num_output_features: string or number indicating the number of output features
+
+    Returns:
+        model: Neural network model
+
+    """
 
     cut_model = True
 
@@ -156,18 +150,33 @@ def get_model(dataset_model_path, num_output_features=10):
         input_layer = model.input
         output_layer = model.layers[index].output
 
-        intermediate_model = Model(inputs=input_layer, output=output_layer) # New model for deep representation
+        model = Model(inputs=input_layer, output=output_layer) # New model for deep representation
 
-        return intermediate_model
+        return model
     
     else:
         return model
 
 
-def compute_representation_model_dataset(dataset_name, model_path, frames_path, num_output_features, get_train=True):
+def compute_representation_model_dataset(dataset_name: str, model_path: str, frames_path: str, 
+                                         num_output_features: Any, get_train=True) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the inner representations of a dataset with a pre-trained model
+
+    Arguments:
+        dataset_name: Name of the dataset used
+        model_path: Path to the model
+        frames_path: Path to the frames of the dataset
+        num_output_features: Number of output features of the pre-trained model
+        get_train: Indicate if it is needed the training samples.
+
+    Returns:
+        train_x: Training inner representations.
+        test_x: Test inner representations.
+        test_y: Labels of test inputs.
+
+    """
     # Take the generators from "dataset_name" path
-    train_x, test_x, test_y, avg_length, len_train, len_test = get_generators_svm(dataset_name, frames_path, classes=1, use_aug=False,
-                   use_crop=True, crop_dark=None)
+    train_x, test_x, test_y = get_generators_model(dataset_name, frames_path)
     # Get the 'dataset_model' model
     model = get_model(model_path, num_output_features=num_output_features)
 
@@ -181,7 +190,18 @@ def compute_representation_model_dataset(dataset_name, model_path, frames_path, 
     return train_x, test_x, test_y
 
 
-def join_datasets (join_args):
+def join_datasets (join_args: List[np.ndarray]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Return the 'join' dataset out of the representations of the others
+
+    Arguments:
+        join_args: List containing the representations of the three datasets
+
+    Returns:
+        join_train_x: join training dataset.
+        join_test_x: join test dataset.
+        join_test_y: join test labels.
+
+    """
     
     join_train_x = np.concatenate((join_args[0], join_args[3], join_args[6]), axis=0)
 
@@ -192,7 +212,18 @@ def join_datasets (join_args):
     return join_train_x, join_test_x, join_test_y
 
 
-def train_eval_svm(train_x, test_x, test_y):
+def train_eval_svm(train_x: np.ndarray, test_x: np.ndarray, test_y: np.ndarray) -> Dict[str, Any]:
+    """Train and evaluate the OC-SVM with the inner representations.
+
+    Arguments:
+        train_x: Training dataset.
+        test_x: Test dataset.
+        test_y: Test labels.
+
+    Returns:
+        result: Result over test dataset.
+
+    """
     
     clf = OneClassSVM(kernel='rbf', gamma='scale')
     clf.fit(train_x)
@@ -204,21 +235,50 @@ def train_eval_svm(train_x, test_x, test_y):
     return result
 
 
-def validate_experiment(experiment, dataset_model):
+def validate_experiment(experiment: int) -> str:
+    """Validate the number of experiment introduced
+    
+    Arguments:
+        experiment: Number of experiment
+
+    Returns:
+        dir_experiment: Name of the experiment directory.
+
+    """
 
     if (experiment == 1):
         dir_experiment = 'experiment_1'
     elif(experiment == 2):
         dir_experiment = 'experiment_2'
-        if(dataset_model == None):
-            raise Exception('"dataset_model" can not be None in experiment 2')
     else:
         raise Exception('"num_experiment" can not be {}, possible values [1, 2]'.format(experiment))
 
     return dir_experiment
 
+    
+def save_json (full_path: str, data: Dict[Any, Any]) -> None:
+    """Save a dictionary to .json file
 
-def eval_original_model(pred_y, test_y):
+    Arguments:
+        full_path: Path where file will be saved
+        data: Data to save
+
+    """
+    
+    with open(full_path, 'w') as file:
+        json.dump(data, file)
+
+def eval_original_model(pred_y: np.ndarray, test_y: np.ndarray) -> Dict[str, Any]:
+    """Evaluate original model predictions
+
+    Arguments:
+        pred_y: Predictions of the dataset.
+        test_y: True labels of the dataset.
+
+    Returns:
+        result: Result over test dataset.
+
+    """
 
     test_y = [0 if test_y[i] == 1 else 1 for i in range(len(test_y))]
     
@@ -227,11 +287,19 @@ def eval_original_model(pred_y, test_y):
     return result
 
 
-def compute_svm_experiment(experiment, num_output_features, dataset_model=None):
+def compute_svm_experiment(experiment: int, num_output_features: Any, dataset_model: str=None) -> None:
+    """Performs the experiment tasks related with the OC-SVM
+
+    Arguments:
+        experiment: Number of experiment
+        num_output_features: Number of output features desired
+        dataset_model: Name of the pre-trained model
+
+    """
 
     from constant import DATASETS_PATHS
 
-    dir_experiment = validate_experiment(experiment, dataset_model)
+    dir_experiment = validate_experiment(experiment)
     
     join_args = []
     for dataset_name in DATASETS_PATHS.keys():
@@ -245,7 +313,7 @@ def compute_svm_experiment(experiment, num_output_features, dataset_model=None):
             continue
 
         result = train_eval_svm(train_x, test_x, test_y)
-        pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(dir_experiment + "/results_svm/dataset_{}_model_{}-{}.csv".format(dataset_name, dataset_model, num_output_features))
+        save_json(dir_experiment + "/results_svm/dataset_{}_model_{}-{}.csv".format(dataset_name, dataset_model, num_output_features), result)
 
     
     join_train_x, join_test_x, join_test_y = join_datasets(join_args)
@@ -259,15 +327,22 @@ def compute_svm_experiment(experiment, num_output_features, dataset_model=None):
     else:
         name_join = dir_experiment + "/results_svm/dataset_join_model_{}-{}.csv".format(dataset_model, num_output_features)
     
-    pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(name_join)
+    save_json(name_join, result)
 
 
 
-def compute_original_experiment(experiment, dataset_model=None):
+def compute_original_experiment(experiment: int, dataset_model: Any =None) -> None:
+    """Performs the experiment tasks related with the original model
+
+    Arguments:
+        experiment: Number of experiment
+        dataset_model: Name of the pre-trained model
+    
+    """
 
     from constant import DATASETS_PATHS
 
-    dir_experiment = validate_experiment(experiment, dataset_model)
+    dir_experiment = validate_experiment(experiment)
 
     for dataset_name in DATASETS_PATHS.keys(): 
         if (experiment == 1):
@@ -280,4 +355,4 @@ def compute_original_experiment(experiment, dataset_model=None):
 
         result = eval_original_model(pred_y, test_y)
 
-        pd.DataFrame(data=result, dtype=np.float).round(3).to_csv(dir_experiment + "/results_original/dataset_{}_model_{}.csv".format(dataset_name, dataset_model))
+        save_json(dir_experiment + "/results_original/dataset_{}_model_{}.csv".format(dataset_name, dataset_model), result)
