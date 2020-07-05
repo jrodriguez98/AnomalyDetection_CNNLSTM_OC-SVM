@@ -15,6 +15,14 @@ data path are defined as follows:
 - movies - data/raw_videos/movies - [Data_Link](http://academictorrents.com/details/70e0794e2292fc051a13f05ea6f5b6c16f3d3635)
 
 ## Experiments:
+### Libraries prerequisites:
+- python 3.6
+- numpy 1.14.0
+- keras 2.2.0
+- tensorflow 1.9.0
+- Pillow 3.1.2
+- opencv-python 3.4.1.15
+
 ### Running experiment 1
 Run ''python run_experiment_1.py''. A new directory called ''experiment_1'' will be created along with 2 subdirectories called ''experiment_1/results_original'' and ''experiment_1/results_svm''
 
