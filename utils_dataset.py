@@ -2,27 +2,43 @@ import os
 import cv2
 import pickle
 import math
+import numpy as np
 from keras.utils import Sequence
 from DatasetBuilder import get_sequences_x, save_figures_from_video
-from typing import Dict
+from typing import Dict, List, Tuple
 
 
 
-class Dataset_Sequence(Sequence):
-    """
+class DatasetSequence(Sequence):
+    """Class to generate Sequence object to avoid memory problems"""
 
-    """
-
-    def __init__(self, x_set, batch_size, figure_shape, seq_length):
+    def __init__(self, x_set: List[str], batch_size: int, figure_shape: Tuple[int, int], seq_length: int):
+        """Class constructor
+        
+        Arguments:
+            x_set: List with paths to the files containing training samples.
+            batch_size: Size of the neural network batch.
+            figure_shape: Dimensions of the images.
+            seq_length: Number of frames per video.
+        """
         self.x = x_set
         self.batch_size = batch_size
         self.figure_shape = figure_shape
         self.seq_length = seq_length
 
-    def __len__(self):
+    def __len__(self) -> int:
+        """Length of the sequence"""
         return math.ceil(len(self.x) / self.batch_size) # Generator lenght
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> np.ndarray:
+        """Return the training sample each step during the sequence
+
+        Arguments:
+            idx: Number of current step
+
+        Returns:
+            X: Batch input of the neural network
+        """
         batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
 
         X = get_sequences_x(batch_x, self.figure_shape, self.seq_length)
