@@ -247,9 +247,9 @@ def validate_experiment(experiment: int) -> str:
     """
 
     if (experiment == 1):
-        dir_experiment = 'experiment_1'
+        dir_experiment = 'results_experiment_1'
     elif(experiment == 2):
-        dir_experiment = 'experiment_2'
+        dir_experiment = 'results_experiment_2'
     else:
         raise Exception('"num_experiment" can not be {}, possible values [1, 2]'.format(experiment))
 
