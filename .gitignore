@@ -1,6 +1,7 @@
 data/
 models/
 models*/
+__init__.py
 
 # Editors
 .vscode/
