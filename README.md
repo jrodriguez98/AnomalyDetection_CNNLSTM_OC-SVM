@@ -42,9 +42,6 @@ The models must be placed in the root directory in **./models**, in that way:
 
 ```
 
-
-
-
 ## Experiments:
 ### Libraries prerequisites:
 - python 3.6
@@ -55,10 +52,10 @@ The models must be placed in the root directory in **./models**, in that way:
 - opencv-python 3.4.1.15
 
 ### Running experiment 1
-Run ''python run_experiment_1.py''. A new directory called ''experiment_1'' will be created along with 2 subdirectories called ''experiment_1/results_original'' and ''experiment_1/results_svm''
+Run **python run_experiment_1.py**. A new directory called *results_experiment_1* will be created along with 2 subdirectories called *results_experiment_1/results_original* and *results_experiment_1/results_svm*.
 
 ### Running experiment 2
-Run ''python run_experiment_2.py''. A new directory called ''experiment_2'' will be created along with 2 subdirectories called ''experiment_2/results_original'' and ''experiment_2/results_svm''
+Run **python run_experiment_2.py**. A new directory called *results_experiment_2* will be created along with 2 subdirectories called *results_experiment_2/results_original* and *results_experiment_2/results_svm*.
 
 ## References
 1. Sudhakaran, Swathikiran, and Oswald Lanz. "Learning to detect violent videos
