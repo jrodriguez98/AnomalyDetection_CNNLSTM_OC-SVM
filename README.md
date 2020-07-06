@@ -8,11 +8,39 @@ In this work we propose an **unsupervised anomaly detection** approach to detect
 
 ![Architecture of the proposed model](https://github.com/jrodriguez98/ViolenceDetection_CNNLSTM/blob/master/images/TFG_architecture.png?raw=True)
 
-## Video datasets paths:
+## Video datasets:
 data path are defined as follows:
 - hocky - data/raw_videos/HockeyFights - [Data_Link](http://academictorrents.com/details/38d9ed996a5a75a039b84cf8a137be794e7cee89/tech)
 - violentflow - data/raw_videos/violentflow - [Data_Link](https://www.openu.ac.il/home/hassner/data/violentflows/)
 - movies - data/raw_videos/movies - [Data_Link](http://academictorrents.com/details/70e0794e2292fc051a13f05ea6f5b6c16f3d3635)
+
+The datasets must be placed in the root directory in **./data/raw_videos**, in that way:
+
+```bash
+.
+├── data
+    └── raw_videos
+        ├── HockeyFights
+        ├── movies
+        └── violentflow      
+
+```
+
+## Pretrained models:
+You can download the pretrained models from thid Google Drive:
+- https://drive.google.com/file/d/1gFx3ivUHOE03SOSr2_TF51NEkIK_dSxH/view?usp=sharing
+
+The models must be placed in the root directory in **./models**, in that way:
+
+```bash
+.
+├── models
+    ├── hocky.h5
+    ├── movies.h5
+    └── violentflow.h5
+    
+
+```
 
 ## Experiments:
 ### Libraries prerequisites:
@@ -24,10 +52,10 @@ data path are defined as follows:
 - opencv-python 3.4.1.15
 
 ### Running experiment 1
-Run ''python run_experiment_1.py''. A new directory called ''experiment_1'' will be created along with 2 subdirectories called ''experiment_1/results_original'' and ''experiment_1/results_svm''
+Run **python run_experiment_1.py**. A new directory called *results_experiment_1* will be created along with 2 subdirectories called *results_experiment_1/results_original* and *results_experiment_1/results_svm*.
 
 ### Running experiment 2
-Run ''python run_experiment_2.py''. A new directory called ''experiment_2'' will be created along with 2 subdirectories called ''experiment_2/results_original'' and ''experiment_2/results_svm''
+Run **python run_experiment_2.py**. A new directory called *results_experiment_2* will be created along with 2 subdirectories called *results_experiment_2/results_original* and *results_experiment_2/results_svm*.
 
 ## References
 1. Sudhakaran, Swathikiran, and Oswald Lanz. "Learning to detect violent videos
