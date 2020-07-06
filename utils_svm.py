@@ -117,7 +117,7 @@ def get_generators_model(dataset_name: str, dataset_frames_path: str) -> Tuple[D
     return train_x, test_x, test_y
 
 
-def get_model(dataset_model_path: str, num_output_features=10) -> Model:
+def get_model(dataset_model_path: str, num_output_features: int=10) -> Model:
     """Return the model with the a number of output features
 
     Arguments:
@@ -159,7 +159,7 @@ def get_model(dataset_model_path: str, num_output_features=10) -> Model:
 
 
 def compute_representation_model_dataset(dataset_name: str, model_path: str, frames_path: str, 
-                                         num_output_features: Any, get_train=True) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+                                         num_output_features: Any, get_train: bool=True) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute the inner representations of a dataset with a pre-trained model
 
     Arguments:
