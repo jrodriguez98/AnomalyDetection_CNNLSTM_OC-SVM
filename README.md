@@ -27,7 +27,7 @@ The datasets must be placed in the root directory in **./data/raw_videos**, in t
 ```
 
 ## Pretrained models:
-You can download the pretrained models from thid Google Drive:
+You can download the pretrained models from this Google Drive:
 - https://drive.google.com/file/d/1gFx3ivUHOE03SOSr2_TF51NEkIK_dSxH/view?usp=sharing
 
 The models must be placed in the root directory in **./models**, in that way:
