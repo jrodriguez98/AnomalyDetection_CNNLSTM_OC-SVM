@@ -3,6 +3,28 @@
 ## Introduction
 In this work we propose an **unsupervised anomaly detection** approach to detect anomalies in videos such as violence. We use the violence detection model proposed by [1] as features extractor. The original model was implemented with Pytorch [2] but we use Keras and TensorFlow implementation developed by [3].
 
+## Files
+### Python scripts implemented
+- run_experiment_1.py: Execute the experiment 1 and save the results.
+- run_experiment_2.py: Execute the experiment 2 and save the results.
+- utils_svm.py: It contains all the funcion related to the OC-SVM tasks.
+- utils_dataset.py: It contains functions and classes related to datasets tasks in our project.
+- constant.py: It contains the constants of the project.
+
+### Python scripts exported from original work
+- build_model_basic.py: Build the original models.
+- dataset_builder.py: Contains funtions used in utils_dataset.py to construct the datasets.
+- train_original_models.py: Train and save the original models. It is used to get the pretrained models.
+
+### Images/
+- original_arquitecture.jpeg: Image of the original arcuitecture [3].
+- TFG_arquitecture: Image of the architecture implemented in this project.
+
+### Results
+- results_experiment_1: Directory containing the results of the experiment 1.
+- results_experiment_2: Directory containing the results of the experiment 2.
+
+
 
 ## Architecture structure
 
@@ -43,13 +65,10 @@ The models must be placed in the root directory in **./models**, in that way:
 ```
 
 ## Experiments:
-### Libraries prerequisites:
+### Library prerequisites:
 - python 3.6
-- numpy 1.14.0
-- keras 2.2.0
-- tensorflow 1.9.0
-- Pillow 3.1.2
-- opencv-python 3.4.1.15
+
+Run **pip install -r requirements.txt**
 
 ### Running experiment 1
 Run **python run_experiment_1.py**. A new directory called *results_experiment_1* will be created along with 2 subdirectories called *results_experiment_1/results_original* and *results_experiment_1/results_svm*.
