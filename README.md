@@ -1,42 +1,42 @@
-# Anomaly detection in videos using deep learning and unsupervised learning
+# Detección de anomalías en vídeos utilizando deep learning y aprendizaje no supervisado
 
-## Introduction
-In this work we propose an **unsupervised anomaly detection** approach to detect anomalies in videos such as violence. We use the violence detection model proposed by [1] as features extractor. The original model was implemented with Pytorch [2] but we use Keras and TensorFlow implementation developed by [3].
-
-## Files
-### Python scripts implemented
-- run_experiment_1.py: Execute the experiment 1 and save the results.
-- run_experiment_2.py: Execute the experiment 2 and save the results.
-- utils_svm.py: It contains all the funcion related to the OC-SVM tasks.
-- utils_dataset.py: It contains functions and classes related to datasets tasks in our project.
-- constant.py: It contains the constants of the project.
-
-### Python scripts exported from original work
-- build_model_basic.py: Build the original models.
-- dataset_builder.py: Contains funtions used in utils_dataset.py to construct the datasets.
-- train_original_models.py: Train and save the original models. It is used to get the pretrained models.
-
-### Images/
-- original_arquitecture.jpeg: Image of the original arcuitecture [3].
-- TFG_arquitecture: Image of the architecture implemented in this project.
-
-### Results
-- results_experiment_1: Directory containing the results of the experiment 1.
-- results_experiment_2: Directory containing the results of the experiment 2.
+## Introducción
+En este trabajo proponemos un enfoque de **aprendizaje no supervisado** para detectar anomalías como pueden ser actos de violencia. Usamos el modelo de detección de violencia propuesto por [1] como extractor de características. El modelo original fue implementado en Pytorch [2] pero usamos una implementación con Keras y Tensorflow desarrollada por [3].
 
 
+## Archivos
+### Scripts de Python implementados:
+- run_experiment_1.py: Ejecuta el experimento 1 y guarda los resultados.
+- run_experiment_2.py: Ejecuta el experimento 2 y guarda los resultados.
+- utils_svm.py: Contiene todas las funciones relacionadas con la OC-SVM.
+- utils_dataset.py: Contiene funciones y clases relacionadas con los conjuntos de datos en nuestro proyecto.
+- constant.py: Contiene las constantes del proyecto.
 
-## Architecture structure
+### Scripts de python importados del trabajo original
+- build_model_basic.py: Construye el modelo original.
+- dataset_builder.py: Contiene funciones utilizadas en "utils_dataset.py" para construir los conjuntos de datos.
+- train_original_models.py: Entrena y guarda los modelos originales. Es usado para obtener los modelos pre-entrenados.
+
+
+### Imágenes
+- original_arquitecture.jpeg: Imagen de la arquitectura original [3].
+- TFG_arquitecture: Imagen de la arquitectura propuesta en este proyecto.
+
+### Resultados
+- results_experiment_1: Directorio que contiene los resultados del experimento 1.
+- results_experiment_2: Directorio que contiene los resultados del experimento 2.
+
+## Arquitectura propuesta
 ![alt text](https://github.com/jrodriguez98/ViolenceDetection_CNNLSTM/blob/master/images/TFG_architecture.png)
 
 
-## Video datasets:
-data path are defined as follows:
+## Conjuntos de datos de vídeos:
+La ruta de los conjuntos se define de la siguiente forma:
 - hocky - data/raw_videos/HockeyFights - [Data_Link](http://academictorrents.com/details/38d9ed996a5a75a039b84cf8a137be794e7cee89/tech)
 - violentflow - data/raw_videos/violentflow - [Data_Link](https://www.openu.ac.il/home/hassner/data/violentflows/)
 - movies - data/raw_videos/movies - [Data_Link](http://academictorrents.com/details/70e0794e2292fc051a13f05ea6f5b6c16f3d3635)
 
-The datasets must be placed in the root directory in **./data/raw_videos**, in that way:
+Deben ser situados en **./data/raw_videos**, de esta manera:
 
 ```bash
 .
@@ -48,11 +48,11 @@ The datasets must be placed in the root directory in **./data/raw_videos**, in t
 
 ```
 
-## Pretrained models:
-You can download the pretrained models from this Google Drive:
+## Modelos pre-entrenados:
+Los modelos pre-entrenados se pueden descargar del siguiente Google Drive:
 - https://drive.google.com/file/d/1gFx3ivUHOE03SOSr2_TF51NEkIK_dSxH/view?usp=sharing
 
-The models must be placed in the root directory in **./models**, in that way:
+Deben ser situados en **./models**, de esta manera:
 
 ```bash
 .
@@ -64,19 +64,19 @@ The models must be placed in the root directory in **./models**, in that way:
 
 ```
 
-## Experiments:
-### Library prerequisites:
+## Experimentos:
+### Requisitos:
 - python 3.6
 
-Run **pip install -r requirements.txt**
+Ejecutar **pip install -r requirements.txt**
 
-### Running experiment 1
-Run **python run_experiment_1.py**. A new directory called *results_experiment_1* will be created along with 2 subdirectories called *results_experiment_1/results_original* and *results_experiment_1/results_svm*.
+### Ejecutar el experimento 1
+Ejecutar **python run_experiment_1.py**. Un nuevo directorio llamado *results_experiment_1* será creado junto con dos subdirectorios llamados *results_experiment_1/results_original* y *results_experiment_1/results_svm*.
 
-### Running experiment 2
-Run **python run_experiment_2.py**. A new directory called *results_experiment_2* will be created along with 2 subdirectories called *results_experiment_2/results_original* and *results_experiment_2/results_svm*.
+### Ejecutar experimento 2
+Ejecutar **python run_experiment_2.py**. Un nuevo directorio llamado *results_experiment_2* será creado junto con dos subdirectorios llamados *results_experiment_2/results_original* y *results_experiment_2/results_svm*.
 
-## References
+## Referencias
 1. Sudhakaran, Swathikiran, and Oswald Lanz. "Learning to detect violent videos
 using convolution long short-term memory." In Advanced Video and Signal Based
 Surveillance (AVSS), 2017 14th IEEE International Conference on, pp. 1-6. IEEE, 2017.
@@ -85,9 +85,9 @@ Surveillance (AVSS), 2017 14th IEEE International Conference on, pp. 1-6. IEEE, 
 
 ------------------------
 
-This is a fork and modification of [liorsidi/ViolenceDetection_CNNLSTM](https://github.com/liorsidi/ViolenceDetection_CNNLSTM), in order to use the models as features extractor for a One-Class Support Vector Machine (OC-SVM)
+Este trabajo es un *fork* y modificación de [liorsidi/ViolenceDetection_CNNLSTM](https://github.com/liorsidi/ViolenceDetection_CNNLSTM), con el objetivo de usar los modelos como extractores de características para la Máquina de soporte vectorial de una clase (OC-SVM)
 
-Below you will find the original README.
+Abajo se encuentra el README original.
 
 ------------------------
 
