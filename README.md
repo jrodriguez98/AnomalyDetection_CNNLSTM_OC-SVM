@@ -27,8 +27,6 @@ En este trabajo proponemos un enfoque de **aprendizaje no supervisado** para det
 - results_experiment_2: Directorio que contiene los resultados del experimento 2.
 
 ## Arquitectura propuesta
-![alt text](https://github.com/jrodriguez98/ViolenceDetection_CNNLSTM/blob/master/images/TFG_architecture.png)
-
 ![Architecture of the proposed model](https://github.com/jrodriguez98/ViolenceDetection_CNNLSTM/blob/master/images/TFG_architecture.png?raw=True)
 
 ## Conjuntos de datos de vídeos:
