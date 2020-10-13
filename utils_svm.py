@@ -100,7 +100,7 @@ def get_generators_model(dataset_name: str, dataset_frames_path: str) -> Tuple[D
 
     """
 
-    from constant import FIX_LEN, BATCH_SIZE, FIGURE_SIZE
+    from config import FIX_LEN, BATCH_SIZE, FIGURE_SIZE
 
     train_path, test_path, test_y = get_positive_class_path(dataset_name, dataset_frames_path)
    
@@ -297,7 +297,7 @@ def compute_svm_experiment(experiment: int, num_output_features: Any, dataset_mo
 
     """
 
-    from constant import DATASETS_PATHS
+    from config import DATASETS_PATHS
 
     dir_experiment = validate_experiment(experiment)
     
@@ -340,7 +340,7 @@ def compute_original_experiment(experiment: int, dataset_model: Any =None) -> No
     
     """
 
-    from constant import DATASETS_PATHS
+    from config import DATASETS_PATHS
 
     dir_experiment = validate_experiment(experiment)
 

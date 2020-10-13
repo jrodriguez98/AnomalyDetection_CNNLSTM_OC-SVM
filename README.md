@@ -10,7 +10,7 @@ En este trabajo proponemos un enfoque de **aprendizaje no supervisado** para det
 - run_experiment_2.py: Ejecuta el experimento 2 y guarda los resultados.
 - utils_svm.py: Contiene todas las funciones relacionadas con la OC-SVM.
 - utils_dataset.py: Contiene funciones y clases relacionadas con los conjuntos de datos en nuestro proyecto.
-- constant.py: Contiene las constantes del proyecto.
+- config.py: Contiene las constantes del proyecto.
 
 ### Scripts de python importados del trabajo original
 - build_model_basic.py: Construye el modelo original.

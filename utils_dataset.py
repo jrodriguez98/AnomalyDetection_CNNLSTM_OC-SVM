@@ -96,7 +96,7 @@ def create_datasets(datasets_paths: Dict[str, str], fix_len: int) -> None:
     
 
 if __name__ == "__main__":
-    from constant import DATASETS_PATHS, FIX_LEN
+    from config import DATASETS_PATHS, FIX_LEN
 
     create_datasets(DATASETS_PATHS, FIX_LEN)
 

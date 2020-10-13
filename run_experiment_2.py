@@ -1,5 +1,5 @@
 from utils_svm import compute_svm_experiment, compute_original_experiment, create_dirs_experiment
-from constant import DATASETS_PATHS, FIX_LEN # Import constant needed
+from config import DATASETS_PATHS, FIX_LEN # Import config needed
 from utils_dataset import create_datasets
 
 

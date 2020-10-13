@@ -1,7 +1,7 @@
 from utils_svm import compute_svm_experiment, compute_original_experiment, create_dirs_experiment
 from utils_dataset import create_datasets
 from sklearn.metrics import accuracy_score, classification_report
-from constant import DATASETS_PATHS, FIX_LEN # Import constant needed
+from config import DATASETS_PATHS, FIX_LEN # Import config needed
 import os
 
 def main():
