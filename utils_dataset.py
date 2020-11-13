@@ -45,6 +45,54 @@ class DatasetSequence(Sequence):
 
         return X
 
+class OCNNDatasetSequence(Sequence):
+    """Class to generate Sequence object to avoid memory problems"""
+
+    def __init__(
+            self,
+            x_set: List[str],
+            y_set: List[int],
+            batch_size: int,
+            figure_shape: Tuple[int, int],
+            seq_length: int
+    ):
+        """Class constructor
+
+        Arguments:
+            x_set: List with paths to the files containing training samples.
+            y_set: List with the label of the training samples
+            batch_size: Size of the neural network batch.
+            figure_shape: Dimensions of the images.
+            seq_length: Number of frames per video.
+        """
+        self.x = x_set
+        self.y = y_set
+        self.batch_size = batch_size
+        self.figure_shape = figure_shape
+        self.seq_length = seq_length
+
+    def __len__(self) -> int:
+        """Length of the sequence"""
+        return math.ceil(len(self.x) / self.batch_size)  # Generator lenght
+
+    def __getitem__(self, idx: int) -> np.ndarray:
+        """Return the training sample each step during the sequence
+
+        Arguments:
+            idx: Number of current step
+
+        Returns:
+            X: Batch input of the neural network
+            y: Batch target of the neural network
+        """
+        batch_x = self.x[idx * self.batch_size:(idx + 1) * self.batch_size]
+        batch_y = np.array(self.y[idx * self.batch_size:(idx + 1) * self.batch_size])
+
+        # Load the batch from the disk
+        X = get_sequences_x(batch_x, self.figure_shape, self.seq_length)
+
+        return X, batch_y
+
 
 def create_dataset(dataset_name: str, dataset_video_path: str, dataset_frames_path: str, fix_len: int):
     """Extract the frames from the raw videos of a dataset.

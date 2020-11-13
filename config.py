@@ -11,6 +11,8 @@ FIGURE_SIZE = 244
 FORCE = True
 BATCH_SIZE = 2
 
+NUM_HIDDEN = 32
+
 # OC_NN constants
-RVALUE = 0.1
+RVALUE = 1
 NU = np.float32(.2)

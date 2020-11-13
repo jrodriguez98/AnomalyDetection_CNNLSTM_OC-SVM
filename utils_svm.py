@@ -1,14 +1,14 @@
 import os
 from sklearn.svm import OneClassSVM
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
-import glob
 from random import shuffle
-from keras.models import load_model, Model
 import numpy as np
 from utils_dataset import DatasetSequence
-from typing import Dict, Tuple, Sequence, List, Any
+from typing import Dict, Tuple, List, Any
 import json
+
+from keras.models import load_model, Model
 
 
 def create_dirs_experiment(experiment: int) -> None:
@@ -153,7 +153,7 @@ def get_model(dataset_model_path: str, num_output_features: int=10) -> Model:
         model = Model(inputs=input_layer, output=output_layer) # New model for deep representation
 
         return model
-    
+
     else:
         return model
 
@@ -190,6 +190,8 @@ def compute_representation_model_dataset(dataset_name: str, model_path: str, fra
     return train_x, test_x, test_y
 
 
+
+
 def join_datasets (join_args: List[np.ndarray]) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Return the 'join' dataset out of the representations of the others
 
@@ -224,12 +226,12 @@ def train_eval_svm(train_x: np.ndarray, test_x: np.ndarray, test_y: np.ndarray) 
         result: Result over test dataset.
 
     """
-    
+
     clf = OneClassSVM(kernel='rbf', gamma='scale')
     clf.fit(train_x)
 
     y_pred = clf.predict(test_x) # Predictions
-    
+
     result = classification_report(test_y, y_pred, output_dict=True)
 
     return result
@@ -356,3 +358,46 @@ def compute_original_experiment(experiment: int, dataset_model: Any =None) -> No
         result = eval_original_model(pred_y, test_y)
 
         save_json(dir_experiment + "/results_original/dataset_{}_model_{}.json".format(dataset_name, dataset_model), result)
+
+
+
+"""def compute_OCNN_experiment(experiment: int, dataset_model: str) -> None:
+    Performs the experiment tasks related with the OC-NN
+
+    Arguments:
+        experiment: Number of experiment
+        dataset_model: Name of the pre-trained model
+    
+
+    from config import DATASETS_PATHS
+
+    dir_experiment = validate_experiment(experiment)
+    
+    join_args = []
+    for dataset_name in DATASETS_PATHS.keys():
+        if (experiment == 1):
+            dataset_model = dataset_name
+
+        train_x, test_x, test_y = compute_representation_model_dataset(dataset_name, DATASETS_PATHS[dataset_model]['model'], DATASETS_PATHS[dataset_name]['frames'], num_output_features)
+        join_args.extend([train_x, test_x, test_y])
+
+        if (experiment == 2 and (dataset_model == dataset_name)): # Experiment 2 just compute cross model-dataset
+            continue
+
+        result = train_eval_svm(train_x, test_x, test_y)
+        save_json(dir_experiment + "/results_svm/dataset_{}_model_{}-{}.json".format(dataset_name, dataset_model, num_output_features), result)
+
+    
+    join_train_x, join_test_x, join_test_y = join_datasets(join_args)
+
+    del join_args[:]
+
+    result = train_eval_svm(join_train_x, join_test_x, join_test_y)
+
+    if (experiment == 1):
+        name_join = dir_experiment + "/results_svm/dataset_join_model-{}.json".format(num_output_features)
+    else:
+        name_join = dir_experiment + "/results_svm/dataset_join_model_{}-{}.json".format(dataset_model, num_output_features)
+    
+    save_json(name_join, result)"""
+
